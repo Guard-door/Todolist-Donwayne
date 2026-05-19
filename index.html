@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>待办事项</title>
+  <title>To Do</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="offlineBanner" class="offline-banner" hidden>
+    <span id="offlineMsg"></span>
+  </div>
+
   <main class="app-container">
     <header class="header">
-      <h1>待办事项</h1>
+      <h1>To Do</h1>
       <p class="subtitle">把今天的事情一件件做完</p>
     </header>
 
@@ -23,10 +29,26 @@
       <button type="submit" id="addBtn" class="add-btn">添加</button>
     </form>
 
+    <div class="toolbar">
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="搜索任务..."
+        autocomplete="off"
+      >
+      <div class="filter-btns">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="active">未完成</button>
+        <button class="filter-btn" data-filter="done">已完成</button>
+        <button class="filter-btn myday-btn" data-filter="myday">☀️ 我的一天</button>
+      </div>
+    </div>
+
     <ul id="todoList" class="todo-list" aria-label="待办事项列表"></ul>
 
     <div id="emptyState" class="empty-state">
-      <p>还没有任务，快来添加一个吧</p>
+      <p id="welcomeMsg">暂无任务，添加一条吧 ✨</p>
     </div>
 
     <footer class="footer">

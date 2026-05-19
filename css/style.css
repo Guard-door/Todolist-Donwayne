@@ -114,6 +114,64 @@ ul, ol {
   transform: scale(0.97);
 }
 
+/* === 工具栏 === */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e8ecf0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #4a90d9;
+  background: #fff;
+}
+
+.search-input::placeholder {
+  color: #bbb;
+}
+
+.filter-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #777;
+  background: #f0f2f5;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  color: #fff;
+  background: #4a90d9;
+}
+
+.myday-btn {
+  border: 2px solid transparent;
+}
+
+.myday-btn.active {
+  color: #e08b00;
+  background: #fff8e8;
+  border-color: #f0c040;
+}
+
 /* === 任务列表 === */
 .todo-list {
   display: flex;
@@ -144,15 +202,64 @@ ul, ol {
   cursor: pointer;
 }
 
-.todo-text {
+.todo-body {
   flex: 1;
+  min-width: 0;
+}
+
+.todo-text {
+  display: block;
   font-size: 15px;
   word-break: break-all;
+}
+
+.todo-time {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #c0c0c0;
 }
 
 .todo-item.completed .todo-text {
   text-decoration: line-through;
   color: #bbb;
+}
+
+.todo-item.completed .todo-time {
+  color: #ddd;
+}
+
+/* === 原地编辑 === */
+.todo-edit-input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 2px solid #4a90d9;
+  border-radius: 4px;
+  font-size: 15px;
+  background: #fff;
+  outline: none;
+}
+
+.todo-star {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #ccc;
+  transition: all 0.2s;
+}
+
+.todo-star:hover {
+  color: #e08b00;
+  background: #fff8e8;
+}
+
+.todo-star.active {
+  color: #e08b00;
 }
 
 .todo-delete {
@@ -210,6 +317,35 @@ ul, ol {
 
 .clear-btn:hover {
   opacity: 0.7;
+}
+
+/* === 离线横幅 === */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.offline-banner.offline {
+  background: #e04848;
+}
+
+.offline-banner.online {
+  background: #4caf50;
+}
+
+.offline-banner[hidden] {
+  display: block;
+  transform: translateY(-100%);
+  opacity: 0;
 }
 
 /* === 响应式 === */
