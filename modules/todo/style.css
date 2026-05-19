@@ -1,0 +1,431 @@
+/* ================================================================
+   Todo 模块样式 — FAB、模态框、DDL 选择器、任务列表、空状态
+   ================================================================ */
+
+/* ── 悬浮添加按钮 (FAB) ──────────────────────────────────── */
+
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 80px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 210;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #4a90d9;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(74, 144, 217, 0.35), 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab:hover {
+  box-shadow: 0 8px 28px rgba(74, 144, 217, 0.45), 0 3px 6px rgba(0,0,0,0.12);
+}
+.fab:active { transform: scale(0.92); }
+
+/* ── 模态框 ──────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: opacity 0.25s;
+}
+
+.modal-overlay[hidden] {
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+  transform: translateY(0);
+  transition: transform 0.25s;
+}
+
+.modal-overlay[hidden] .modal-panel { transform: translateY(100%); }
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e8ecf0;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+
+.modal-input:focus { border-color: #4a90d9; background: #fff; }
+
+.modal-field {
+  margin-top: 16px;
+  position: relative;
+}
+
+/* DDL 开关按钮 */
+.ddl-toggle {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e8ecf0;
+  border-radius: 8px;
+  font-size: 15px;
+  text-align: left;
+  color: #bbb;
+  background: #fafbfc;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ddl-toggle:focus { border-color: #4a90d9; }
+.ddl-toggle.set { color: #1a1a2e; }
+
+/* DDL 开关按钮 */
+.ddl-toggle {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e8ecf0;
+  border-radius: 8px;
+  font-size: 15px;
+  text-align: left;
+  color: #bbb;
+  background: #fafbfc;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.ddl-toggle:focus { border-color: #4a90d9; }
+.ddl-toggle.set { color: #1a1a2e; }
+
+/* ── 日历面板（向上弹出） ────────────────────────────── */
+
+.calendar-panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  padding: 16px;
+  background: #fff;
+  border: 2px solid #e8ecf0;
+  border-radius: 12px;
+  animation: calUp 0.2s ease;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.calendar-panel[hidden] { display: none; }
+
+@keyframes calUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.cal-nav {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #555;
+  transition: background 0.15s;
+}
+
+.cal-nav:hover { background: #f0f2f5; }
+
+.cal-title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.cal-weekdays span {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+}
+
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-day {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cal-day:hover { background: #f0f3f7; }
+
+.cal-day.past {
+  color: #d0d0d0;
+  cursor: default;
+  pointer-events: none;
+}
+
+.cal-day.today {
+  background: #4a90d9;
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-day.selected {
+  background: #e8f0fb;
+  color: #4a90d9;
+  font-weight: 700;
+}
+
+.cal-day.today.selected {
+  background: #4a90d9;
+  color: #fff;
+  box-shadow: 0 0 0 2px #4a90d9, 0 0 0 4px #e8f0fb;
+}
+
+/* DDL 行：按钮 + 内嵌清除 ✕（与任务删除按钮一致） */
+.ddl-row {
+  position: relative;
+}
+
+.ddl-row .ddl-toggle {
+  padding-right: 36px;
+}
+
+.ddl-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #bbb;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ddl-clear:hover { color: #e04848; background: #ffeaea; }
+
+.ddl-clear[hidden] { display: none; }
+
+/* 模态操作按钮 */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.modal-btn:active { opacity: 0.7; }
+.modal-btn-cancel { background: #f0f2f5; color: #777; }
+.modal-btn-confirm { background: #4a90d9; color: #fff; }
+
+/* ── 任务列表 ────────────────────────────────────────────── */
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+.todo-item:hover {
+  background: #fafbfc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* 已完成分组顶部分隔 */
+.todo-separator {
+  height: 0;
+  margin: 4px 0;
+  box-shadow: inset 0 4px 8px -5px rgba(0,0,0,0.28);
+}
+
+.todo-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: #4a90d9;
+  cursor: pointer;
+}
+
+.todo-body { flex: 1; min-width: 0; }
+
+.todo-text {
+  display: block;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+.todo-deadline {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #c0c0c0;
+}
+
+.todo-deadline.overdue { color: #e04848; font-weight: 600; }
+
+.todo-item.completed {
+  background: rgba(0,0,0,0.015);
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: #bbb;
+}
+
+.todo-item.completed .todo-deadline { color: #ddd; }
+
+/* ── 原地编辑 ────────────────────────────────────────────── */
+
+.todo-edit-input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 2px solid #4a90d9;
+  border-radius: 4px;
+  font-size: 15px;
+  background: #fff;
+  outline: none;
+}
+
+/* ── 删除按钮 ────────────────────────────────────────────── */
+
+.todo-delete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #bbb;
+  transition: all 0.2s;
+  visibility: hidden;
+}
+
+.todo-item:hover .todo-delete { visibility: visible; }
+.todo-delete:hover { background: #ffeaea; color: #e04848; }
+
+/* ── 空状态 ──────────────────────────────────────────────── */
+
+.empty-state {
+  text-align: center;
+  padding: 24px 0;
+  color: #bbb;
+  font-size: 14px;
+}
+
+.empty-state.hidden { display: none; }
+
+/* ── 上下文菜单 ──────────────────────────────────────── */
+
+.context-menu {
+  position: fixed;
+  z-index: 350;
+  min-width: 120px;
+  padding: 4px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  animation: ctxIn 0.12s ease;
+}
+
+.context-menu[hidden] { display: none; }
+
+@keyframes ctxIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  text-align: left;
+  color: #333;
+  transition: background 0.1s;
+}
+
+.context-menu-item:hover { background: #f0f3f7; }
+
+/* ── 响应式 ──────────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+  .fab { right: 16px; width: 48px; height: 48px; }
+}

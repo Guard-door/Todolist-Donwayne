@@ -2,61 +2,132 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>To Do</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="modules/todo/style.css">
 </head>
 <body>
+
+  <!-- 顶部固定导航栏 -->
+  <nav class="top-bar">
+    <div class="top-bar-left">
+      <button id="mydayToggle" class="top-sun-btn" aria-label="我的一天">
+        <svg class="top-sun-icon" viewBox="0 0 24 24" width="20" height="20">
+          <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div id="topWifiIcon"></div>
+    </div>
+    <span class="top-bar-title">TODO</span>
+    <div class="top-bar-right"></div>
+  </nav>
+
+  <!-- Myday 侧边面板遮罩 -->
+  <div id="mydayOverlay" class="myday-overlay" hidden></div>
+
+  <!-- Myday 侧边面板 -->
+  <aside id="mydayPanel" class="myday-panel">
+    <h2 class="myday-title">My Day</h2>
+    <ul id="mydayList" class="myday-list"></ul>
+    <div class="myday-empty">
+      <p>No, have a relax~</p>
+    </div>
+  </aside>
+
+  <!-- 离线通知横幅 -->
   <div id="offlineBanner" class="offline-banner" hidden>
     <span id="offlineMsg"></span>
   </div>
 
-  <main class="app-container">
-    <header class="header">
-      <h1>To Do</h1>
-      <p class="subtitle">把今天的事情一件件做完</p>
-    </header>
+  <!-- ============ Todo 模块（内联 HTML 片段） ============ -->
+  <main id="app-content">
 
-    <form class="input-area" autocomplete="off">
-      <input
-        type="text"
-        id="todoInput"
-        class="todo-input"
-        placeholder="添加新任务..."
-      >
-      <button type="submit" id="addBtn" class="add-btn">添加</button>
-    </form>
+    <!-- 悬浮添加按钮 -->
+    <button id="fabBtn" class="fab" aria-label="添加任务">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </button>
 
-    <div class="toolbar">
-      <input
-        type="text"
-        id="searchInput"
-        class="search-input"
-        placeholder="搜索任务..."
-        autocomplete="off"
-      >
-      <div class="filter-btns">
-        <button class="filter-btn active" data-filter="all">全部</button>
-        <button class="filter-btn" data-filter="active">未完成</button>
-        <button class="filter-btn" data-filter="done">已完成</button>
-        <button class="filter-btn myday-btn" data-filter="myday">☀️ 我的一天</button>
+    <!-- 添加任务模态框 -->
+    <div id="modalOverlay" class="modal-overlay" hidden>
+      <div id="modalPanel" class="modal-panel">
+        <h2 class="modal-title">Add Task</h2>
+
+        <input
+          type="text"
+          id="modalContent"
+          class="modal-input"
+          placeholder="Content"
+          autocomplete="off"
+        >
+
+        <div class="modal-field">
+          <div class="ddl-row">
+            <button type="button" id="ddlToggle" class="ddl-toggle">DDL</button>
+            <button type="button" id="ddlClear" class="ddl-clear" hidden>✕</button>
+          </div>
+          <div id="ddlCalendar" class="calendar-panel" hidden>
+            <div class="cal-header">
+              <button class="cal-nav" id="calPrevYear" aria-label="上一年">«</button>
+              <button class="cal-nav" id="calPrev" aria-label="上个月">‹</button>
+              <span id="calTitle" class="cal-title">2026年 5月</span>
+              <button class="cal-nav" id="calNext" aria-label="下个月">›</button>
+              <button class="cal-nav" id="calNextYear" aria-label="下一年">»</button>
+            </div>
+            <div class="cal-weekdays">
+              <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+            </div>
+            <div id="calDays" class="cal-days"></div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="modalCancel" class="modal-btn modal-btn-cancel">取消</button>
+          <button id="modalConfirm" class="modal-btn modal-btn-confirm">添加</button>
+        </div>
       </div>
     </div>
 
+    <!-- 任务列表区域 -->
     <ul id="todoList" class="todo-list" aria-label="待办事项列表"></ul>
 
     <div id="emptyState" class="empty-state">
       <p id="welcomeMsg">暂无任务，添加一条吧 ✨</p>
     </div>
 
-    <footer class="footer">
-      <span id="stats">0 项任务</span>
-      <button id="clearDone" class="clear-btn" hidden>清空已完成</button>
-    </footer>
+    <!-- 长按上下文菜单 -->
+    <div id="contextMenu" class="context-menu" hidden>
+      <button id="ctxEdit" class="context-menu-item">编辑</button>
+    </div>
+
   </main>
 
-  <script src="js/app.js"></script>
+  <!-- 底部固定功能栏 -->
+  <nav class="bottom-bar">
+    <button class="tab-btn active">
+      <svg class="tab-icon" viewBox="0 0 24 24" width="20" height="20">
+        <polyline points="4,13 10,19 20,5"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </nav>
+
+  <!-- JS：Todo 模块必须先于 Shell 加载 -->
+  <script src="modules/todo/app.js"></script>
+  <script src="js/shell.js"></script>
 </body>
 </html>
