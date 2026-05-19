@@ -1,0 +1,204 @@
+【iOS 风格滚轮日期选择器 — 备份】
+
+=== HTML（位于模态框 .modal-field 内）===
+
+<button type="button" id="ddlToggle" class="ddl-toggle">DDL</button>
+<div id="ddlPicker" class="scroll-picker" hidden>
+  <div class="picker-col" id="pickerYear">
+    <div class="picker-list"></div>
+  </div>
+  <div class="picker-col" id="pickerMonth">
+    <div class="picker-list"></div>
+  </div>
+  <div class="picker-col" id="pickerDay">
+    <div class="picker-list"></div>
+  </div>
+  <div class="picker-highlight"></div>
+</div>
+
+=== CSS ===
+
+.scroll-picker {
+  display: flex;
+  position: relative;
+  height: 180px;
+  margin-top: 10px;
+  background: #fafbfc;
+  border: 2px solid #e8ecf0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.scroll-picker[hidden] { display: none; }
+
+.picker-col {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: relative;
+}
+.picker-col::-webkit-scrollbar { display: none; }
+.picker-col { scrollbar-width: none; }
+
+.picker-list { padding: 72px 0; }
+
+.picker-item {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #c0c0c0;
+  scroll-snap-align: center;
+  transition: color 0.15s, font-weight 0.15s;
+  user-select: none;
+}
+.picker-item.selected { color: #1a1a2e; font-weight: 700; font-size: 17px; }
+
+.scroll-picker::before,
+.scroll-picker::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 72px;
+  pointer-events: none;
+  z-index: 3;
+}
+.scroll-picker::before {
+  top: 0;
+  background: linear-gradient(to bottom, #fafbfc 0%, rgba(250,251,252,0) 100%);
+}
+.scroll-picker::after {
+  bottom: 0;
+  background: linear-gradient(to top, #fafbfc 0%, rgba(250,251,252,0) 100%);
+}
+
+.picker-highlight {
+  position: absolute;
+  top: 50%; left: 12px; right: 12px;
+  height: 36px;
+  transform: translateY(-50%);
+  border-top: 1px solid #e0e4e8;
+  border-bottom: 1px solid #e0e4e8;
+  pointer-events: none;
+  z-index: 1;
+}
+
+=== JS ===
+
+const ITEM_HEIGHT = 36;
+
+function buildPickerItems(col, values, labels) {
+  const list = col.querySelector('.picker-list');
+  list.innerHTML = '';
+  values.forEach((v, i) => {
+    const div = document.createElement('div');
+    div.className = 'picker-item';
+    div.textContent = labels ? labels[i] : v;
+    div.dataset.value = v;
+    list.appendChild(div);
+  });
+}
+
+function getDaysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+function buildDays(y, m) {
+  const days = getDaysInMonth(y, m);
+  const vals = [];
+  for (let d = 1; d <= days; d++) vals.push(d);
+  buildPickerItems(pickerDay, vals);
+}
+
+function scrollToValue(col, value) {
+  const items = col.querySelectorAll('.picker-item');
+  let idx = 0;
+  items.forEach((item, i) => { if (+item.dataset.value === +value) idx = i; });
+  col.scrollTop = idx * ITEM_HEIGHT;
+}
+
+function detectSelected(col) {
+  const items = col.querySelectorAll('.picker-item');
+  const center = col.scrollTop + col.clientHeight / 2;
+  let best = null, bestDist = Infinity;
+  items.forEach(item => {
+    const itemCenter = item.offsetTop + ITEM_HEIGHT / 2;
+    const dist = Math.abs(center - itemCenter);
+    if (dist < bestDist) { bestDist = dist; best = item; }
+  });
+  if (best) {
+    items.forEach(i => i.classList.remove('selected'));
+    best.classList.add('selected');
+    return best.dataset.value;
+  }
+  return null;
+}
+
+function syncScrollDeadline() {
+  const y = detectSelected(pickerYear);
+  const m = detectSelected(pickerMonth);
+  updateDaysForScroll(y, m);
+  const d = detectSelected(pickerDay);
+  if (y && m && d) {
+    selectedDeadline = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+}
+
+function updateDaysForScroll(y, m) {
+  const curDay = +detectSelected(pickerDay);
+  const days = getDaysInMonth(+y, +m);
+  buildDays(+y, +m);
+  const maxDay = Math.min(curDay, days);
+  requestAnimationFrame(() => scrollToValue(pickerDay, maxDay));
+}
+
+function initScrollPicker() {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const years = [];
+  for (let y = thisYear; y <= thisYear + 5; y++) years.push(y);
+  buildPickerItems(pickerYear, years);
+  const months = [];
+  for (let m = 1; m <= 12; m++) months.push(m);
+  buildPickerItems(pickerMonth, months);
+  buildDays(thisYear, now.getMonth() + 1);
+
+  [pickerYear, pickerMonth, pickerDay].forEach(col => {
+    col.addEventListener('scroll', () => {
+      requestAnimationFrame(syncScrollDeadline);
+    }, { passive: true });
+  });
+
+  requestAnimationFrame(() => {
+    scrollToValue(pickerYear, thisYear);
+    scrollToValue(pickerMonth, now.getMonth() + 1);
+    scrollToValue(pickerDay, now.getDate());
+    syncScrollDeadline();
+  });
+}
+
+// ddlToggle 点击切换展开/收起（与 select 版本共用同一个按钮逻辑）
+ddlToggle.addEventListener('click', () => {
+  if (ddlPicker.hidden) {
+    ddlPicker.hidden = false;
+    if (selectedDeadline) {
+      const [y, m, d] = selectedDeadline.split('-');
+      requestAnimationFrame(() => {
+        scrollToValue(pickerYear, +y);
+        scrollToValue(pickerMonth, +m);
+        buildDays(+y, +m);
+        requestAnimationFrame(() => {
+          scrollToValue(pickerDay, +d);
+          syncScrollDeadline();
+        });
+      });
+    }
+  } else {
+    syncScrollDeadline();
+    if (selectedDeadline) {
+      ddlToggle.textContent = formatDeadline(selectedDeadline);
+      ddlToggle.classList.add('set');
+    }
+    ddlPicker.hidden = true;
+  }
+});

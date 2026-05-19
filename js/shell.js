@@ -1,0 +1,102 @@
+/* ================================================================
+   Shell — WiFi、离线横幅、Myday 侧边面板、PWA
+   ================================================================ */
+
+/* ── WiFi 图标（单一 SVG 动态绘制） ───────────────────── */
+
+const topWifiIcon = document.getElementById('topWifiIcon');
+const topSunBtn = document.getElementById('mydayToggle');
+
+const WIFI_ONLINE = ''
+  + '<svg class="top-wifi-icon online" viewBox="0 0 24 24" width="18" height="18">'
+  + '<path d="M1 8.5C4.5 5 9 3 12 3s7.5 2 11 5.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<path d="M3.5 11C6 8.5 9 7 12 7s6 1.5 8.5 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<path d="M6.5 14C8 12.5 10 12 12 12s4 .5 5.5 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<circle cx="12" cy="19" r="2" fill="currentColor"/>'
+  + '</svg>';
+
+const WIFI_OFFLINE = ''
+  + '<svg class="top-wifi-icon offline" viewBox="0 0 24 24" width="18" height="18">'
+  + '<path d="M1 8.5C4.5 5 9 3 12 3s7.5 2 11 5.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<path d="M3.5 11C6 8.5 9 7 12 7s6 1.5 8.5 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<path d="M6.5 14C8 12.5 10 12 12 12s4 .5 5.5 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<circle cx="12" cy="19" r="2" fill="currentColor"/>'
+  + '<line x1="4" y1="4" x2="20" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>'
+  + '</svg>';
+
+function setWifiStatus(online) {
+  topWifiIcon.innerHTML = online ? WIFI_ONLINE : WIFI_OFFLINE;
+}
+
+/* ── 离线横幅 ──────────────────────────────────────────── */
+
+const offlineBanner = document.getElementById('offlineBanner');
+const offlineMsg = document.getElementById('offlineMsg');
+
+function showBanner(text, cls) {
+  offlineBanner.className = 'offline-banner ' + cls;
+  offlineMsg.textContent = text;
+  offlineBanner.hidden = false;
+  clearTimeout(offlineBanner._timer);
+}
+
+function hideBanner() {
+  offlineBanner._timer = setTimeout(() => {
+    offlineBanner.hidden = true;
+  }, 2500);
+}
+
+function updateOnlineStatus() {
+  if (navigator.onLine) {
+    setWifiStatus(true);
+    showBanner('已恢复连接', 'online');
+    hideBanner();
+  } else {
+    setWifiStatus(false);
+    showBanner('您已离线，数据将保存在本地', 'offline');
+  }
+}
+
+setWifiStatus(navigator.onLine);
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+/* ── Myday 侧边面板 ───────────────────────────────────── */
+
+const mydayOverlay = document.getElementById('mydayOverlay');
+const mydayPanel = document.getElementById('mydayPanel');
+const mydayList = document.getElementById('mydayList');
+const mydayEmpty = document.querySelector('.myday-empty');
+
+function openMyday() {
+  if (!window.TodoModule) return;
+  const hasItems = window.TodoModule.renderMydayList(mydayList);
+  mydayEmpty.classList.toggle('hidden', hasItems);
+  mydayOverlay.hidden = false;
+  mydayPanel.classList.add('open');
+  topSunBtn.classList.add('active');
+}
+
+function closeMyday() {
+  mydayOverlay.hidden = true;
+  mydayPanel.classList.remove('open');
+  topSunBtn.classList.remove('active');
+}
+
+topSunBtn.addEventListener('click', () => {
+  if (mydayPanel.classList.contains('open')) {
+    closeMyday();
+  } else {
+    openMyday();
+  }
+});
+
+mydayOverlay.addEventListener('click', closeMyday);
+
+/* ── PWA（仅在 https/http 下注册） ─────────────────────── */
+
+if (location.protocol === 'https:' || location.protocol === 'http:') {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  }
+}
