@@ -1,0 +1,226 @@
+/* === 现代 CSS 重置 === */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+  line-height: 1.6;
+  color: #1a1a2e;
+  background-color: #f0f2f5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button, input {
+  font: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* === 容器 === */
+.app-container {
+  max-width: 480px;
+  margin: 60px auto 0;
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* === 头部 === */
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #888;
+}
+
+/* === 输入区 === */
+.input-area {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid #e8ecf0;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+
+.todo-input:focus {
+  border-color: #4a90d9;
+  background: #fff;
+}
+
+.todo-input::placeholder {
+  color: #bbb;
+}
+
+.add-btn {
+  padding: 10px 20px;
+  background: #4a90d9;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #357abd;
+}
+
+.add-btn:active {
+  transform: scale(0.97);
+}
+
+/* === 任务列表 === */
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fafbfc;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.todo-item:hover {
+  background: #f0f3f7;
+}
+
+.todo-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: #4a90d9;
+  cursor: pointer;
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: #bbb;
+}
+
+.todo-delete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #bbb;
+  transition: all 0.2s;
+  visibility: hidden;
+}
+
+.todo-item:hover .todo-delete {
+  visibility: visible;
+}
+
+.todo-delete:hover {
+  background: #ffeaea;
+  color: #e04848;
+}
+
+/* === 空状态 === */
+.empty-state {
+  text-align: center;
+  padding: 24px 0;
+  color: #bbb;
+  font-size: 14px;
+}
+
+.empty-state.hidden {
+  display: none;
+}
+
+/* === 底部 === */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eef0f2;
+  font-size: 13px;
+  color: #999;
+}
+
+.clear-btn {
+  color: #e04848;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+
+.clear-btn:hover {
+  opacity: 0.7;
+}
+
+/* === 响应式 === */
+@media (max-width: 520px) {
+  .app-container {
+    margin: 20px 12px 0;
+    padding: 24px 16px;
+    border-radius: 10px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+}
