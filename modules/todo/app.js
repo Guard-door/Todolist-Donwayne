@@ -136,7 +136,7 @@ function render() {
     li.addEventListener('dragstart', onDragStart);
     li.addEventListener('dragend', onDragEnd);
     li.addEventListener('dragover', onDragOver);
-    li.addEventListener('dragleave', onDragLeave);
+
     li.addEventListener('drop', onDrop);
     // 触摸拖拽
     li.addEventListener('touchstart', onTouchStart, { passive: false });
