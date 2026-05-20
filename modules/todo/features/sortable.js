@@ -12,7 +12,7 @@
 
 function enableSortable(listEl, options) {
   if (!listEl) return () => {};
-  const opt = Object.assign({ touchDelay: 300 }, options);
+  const opt = Object.assign({ touchDelay: 200 }, options);
 
   let items = [];
   let dragId = null;
@@ -96,7 +96,7 @@ function enableSortable(listEl, options) {
 
   function cleanup() {
     removeFloating();
-    if (dragEl) dragEl.style.opacity = '';
+    if (dragEl) dragEl.classList.remove('drag-source');
     dragId = null; dragEl = null; lastSwapped = null; active = false;
   }
 
@@ -108,7 +108,7 @@ function enableSortable(listEl, options) {
     dragEl = this;
     lastSwapped = null;
     active = true;
-    this.style.opacity = '0';
+    this.classList.add('drag-source');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragId);
   }
@@ -145,7 +145,7 @@ function enableSortable(listEl, options) {
       touchTimer = null;
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
-      el.style.opacity = '0';
+      el.classList.add('drag-source');
       floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
     }, opt.touchDelay);
   }
@@ -154,12 +154,16 @@ function enableSortable(listEl, options) {
     if (touchDragging) {
       e.preventDefault();
       if (floating) floating.style.top = (e.touches[0].clientY - 30) + 'px';
-      const fx = floating?.getBoundingClientRect().left + (floating?.offsetWidth || 0) / 2;
+      const floatTop = floating?.getBoundingClientRect().top || 0;
+      const fx = (floating?.getBoundingClientRect().left || 0) + (floating?.offsetWidth || 0) / 2;
       const target = document.elementFromPoint(
-        fx || e.touches[0].clientX, e.touches[0].clientY
+        fx || e.touches[0].clientX, floatTop + 10
       )?.closest?.('.todo-item');
       if (target?.dataset?.id && target.dataset.id !== dragId && target.dataset.id !== lastSwapped) {
-        if (crossedMidline(e.touches[0].clientY, target)) performSwap(target.dataset.id);
+        // 浮动元素顶部超过目标中线 → 交换
+        if (floatTop < target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2) {
+          performSwap(target.dataset.id);
+        }
       }
       return;
     }
