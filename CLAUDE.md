@@ -12,19 +12,20 @@ MAJOR.MINOR.PATCH  例 v1.1.0
 | MINOR | 新增独立模块或模块内重要功能 | PATCH 归零 |
 | PATCH | Bug 修复、样式微调、文案修改 | — |
 
-## 自动递增规则
+## 自动递增与本地提交
 
-每次代码修改后，自动判断变更类型并按上表递增版本号。
+每次代码修改后，自动判断变更类型，按上表递增版本号，并**自动 commit 到本地**（message 为 `vX.Y.Z`）。
 
-**用户描述优先**：以用户的表述为准。用户说"新增模块"即 MINOR，说"修复"即 PATCH，即使代码改动量小也不降级。
+**用户描述优先**：用户说"新增模块"即 MINOR，说"修复"即 PATCH，不因代码量小降级。
 
 递增后同步 `service-worker.js` 的 `APP_VERSION` 和 `CHANGELOG.md`。
 
-## 推送流程
+## 推送规则
 
-- 默认推送到 `master` 分支
-- 用户明确同意后才合并到 `main`
-- 用户未要求推送则不推送，仅本地 commit
+- **绝对禁止自动推送**。仅用户说"推送"或"push"时才推送
+- 推送前确认本地 commit 已就绪
+- 推送目标：`master` 分支，同时推送标签
+- 用户说"合并到 main"时才执行 `git merge master → main`
 
 ## Service Worker 版本
 
