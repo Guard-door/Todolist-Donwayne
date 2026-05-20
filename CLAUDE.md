@@ -20,6 +20,8 @@ MAJOR.MINOR.PATCH  例 v1.1.0
 
 递增后同步 `service-worker.js` 的 `APP_VERSION` 和 `CHANGELOG.md`。
 
+**PLAN.md 不 commit，不变更版本号。**
+
 ## 推送与发布
 
 | 指令 | 行为 | 标签 | Release |
