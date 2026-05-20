@@ -132,6 +132,16 @@ function render() {
     const li = document.createElement('li');
     li.className = 'todo-item' + (todo.completed ? ' completed' : '');
     li.dataset.id = todo.id;
+    li.draggable = true;
+    li.addEventListener('dragstart', onDragStart);
+    li.addEventListener('dragend', onDragEnd);
+    li.addEventListener('dragover', onDragOver);
+    li.addEventListener('dragleave', onDragLeave);
+    li.addEventListener('drop', onDrop);
+    // 触摸拖拽
+    li.addEventListener('touchstart', onTouchStart, { passive: false });
+    li.addEventListener('touchmove', onTouchMove, { passive: false });
+    li.addEventListener('touchend', onTouchEnd);
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -169,6 +179,142 @@ function render() {
 
     todoList.appendChild(li);
   });
+}
+
+/* ── 拖拽排序 ────────────────────────────────────────── */
+
+let dragSrcId = null;
+let touchClone = null;
+let touchStartY = 0;
+let touchMoved = false;
+
+function getViewItems() {
+  return [...todos].sort((a, b) => a.completed - b.completed);
+}
+
+function onDragStart(e) {
+  dragSrcId = this.dataset.id;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragSrcId);
+}
+
+function onDragEnd() {
+  this.classList.remove('dragging');
+  dragSrcId = null;
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  if (!dragSrcId || dragSrcId === this.dataset.id) return;
+  e.dataTransfer.dropEffect = 'move';
+  const rect = this.getBoundingClientRect();
+  const mid = rect.top + rect.height / 2;
+  this.classList.toggle('drag-over', e.clientY < mid);
+  this.classList.toggle('drag-under', e.clientY >= mid);
+}
+
+function onDragLeave() {
+  this.classList.remove('drag-over', 'drag-under');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drag-over', 'drag-under');
+  if (!dragSrcId || dragSrcId === this.dataset.id) return;
+
+  const srcIdx = findIndex(+dragSrcId);
+  const srcTodo = todos[srcIdx];
+  const targetId = +this.dataset.id;
+  const targetIdx = findIndex(targetId);
+
+  // Remove source
+  todos.splice(srcIdx, 1);
+  // Find new target position
+  const newTargetIdx = findIndex(targetId);
+  const rect = this.getBoundingClientRect();
+  const insertBefore = e.clientY < rect.top + rect.height / 2;
+  const insertIdx = insertBefore ? newTargetIdx : newTargetIdx + 1;
+  // Adjust if source was before target
+  const finalIdx = srcIdx < insertIdx ? insertIdx - 1 : insertIdx;
+
+  todos.splice(finalIdx, 0, srcTodo);
+  save();
+  render();
+}
+
+/* ── 触摸拖拽 ────────────────────────────────────────── */
+
+function onTouchStart(e) {
+  // 只记录起始位置，由长按逻辑或拖拽逻辑接管
+  touchStartY = e.touches[0].clientY;
+  touchMoved = false;
+}
+
+function onTouchMove(e) {
+  const dy = Math.abs(e.touches[0].clientY - touchStartY);
+  if (dy > 10) {
+    touchMoved = true;
+    // 取消长按菜单
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+    e.preventDefault();
+
+    if (!touchClone) {
+      const li = this;
+      dragSrcId = li.dataset.id;
+      li.classList.add('dragging');
+      touchClone = li.cloneNode(true);
+      touchClone.className += ' touch-clone';
+      touchClone.style.position = 'fixed';
+      touchClone.style.left = li.getBoundingClientRect().left + 'px';
+      touchClone.style.top = (e.touches[0].clientY - 30) + 'px';
+      touchClone.style.width = li.offsetWidth + 'px';
+      touchClone.style.zIndex = '500';
+      touchClone.style.pointerEvents = 'none';
+      touchClone.style.opacity = '0.5';
+      document.body.appendChild(touchClone);
+    }
+    touchClone.style.top = (e.touches[0].clientY - 30) + 'px';
+
+    // 高亮目标位置
+    const els = document.querySelectorAll('.todo-item');
+    els.forEach(el => {
+      el.classList.remove('drag-over', 'drag-under');
+      if (el.dataset.id === dragSrcId) return;
+      const r = el.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (e.touches[0].clientY < mid) el.classList.add('drag-over');
+      else el.classList.add('drag-under');
+    });
+  }
+}
+
+function onTouchEnd(e) {
+  if (!touchClone) return;
+  document.body.removeChild(touchClone);
+  touchClone = null;
+
+  const hovering = document.querySelector('.todo-item.drag-over, .todo-item.drag-under');
+  if (hovering && dragSrcId && dragSrcId !== hovering.dataset.id) {
+    const srcIdx = findIndex(+dragSrcId);
+    const srcTodo = todos[srcIdx];
+    const targetId = +hovering.dataset.id;
+    todos.splice(srcIdx, 1);
+    let newTargetIdx = findIndex(targetId);
+    if (hovering.classList.contains('drag-under')) newTargetIdx++;
+    if (srcIdx < newTargetIdx) newTargetIdx--;
+    todos.splice(newTargetIdx, 0, srcTodo);
+    save();
+    render();
+  }
+
+  document.querySelectorAll('.drag-over, .drag-under, .dragging').forEach(el => {
+    el.classList.remove('drag-over', 'drag-under', 'dragging');
+  });
+  dragSrcId = null;
+  touchMoved = false;
 }
 
 /* ── CRUD ──────────────────────────────────────────────── */
@@ -243,6 +389,7 @@ function addLongPress(el, id) {
   function start(e) {
     started = false;
     longPressTimer = setTimeout(() => {
+      if (touchMoved) return;
       started = true;
       longPressId = id;
       showContextMenu(e);
