@@ -348,7 +348,7 @@ function onTouchDnDMove(e) {
     const target = document.elementFromPoint(
       dragFloating.getBoundingClientRect().left + dragFloating.offsetWidth / 2,
       e.touches[0].clientY
-    )?.closest('.todo-item:not(.drag-hidden)');
+    )?.closest('.todo-item');
     if (target && target.dataset.id && target.dataset.id !== dragSrcId && target.dataset.id !== dragLastSwapped) {
       if (isSameGroup(dragSrcId, target.dataset.id)) {
         const { crossed } = crossedMidline(e.touches[0].clientY, target);
@@ -358,9 +358,7 @@ function onTouchDnDMove(e) {
     return;
   }
 
-  const dy = Math.abs(e.touches[0].clientY - touchStartY);
-  const dt = Date.now() - touchStartTime;
-  if (dy > 8 || dt > 400) {
+  if (Date.now() - touchStartTime > 300) {
     touchDragging = true;
     clearTimeout(longPressTimer);
     longPressTimer = null;
