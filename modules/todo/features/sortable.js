@@ -78,11 +78,14 @@ function enableSortable(listEl, options) {
   function swapWithTarget(tgtEl) {
     const srcEl = dragEl;
     if (!srcEl || !tgtEl || srcEl === tgtEl) return;
+    const list = listEl;
+    if (!list.contains(srcEl) || !list.contains(tgtEl)) return;
+    if (srcEl.parentNode !== tgtEl.parentNode) return;
 
     // 记录旧位置
     const oldTgtTop = tgtEl.getBoundingClientRect().top;
 
-    // 先交换 DOM
+    // 交换 DOM
     const p = srcEl.parentNode;
     const na = srcEl.nextSibling;
     const nb = tgtEl.nextSibling;
@@ -90,14 +93,11 @@ function enableSortable(listEl, options) {
     else if (nb === srcEl) p.insertBefore(srcEl, tgtEl);
     else { p.insertBefore(srcEl, nb); p.insertBefore(tgtEl, na); }
 
-    // 新位置 = 目标元素被移到了空白位处
+    // FLIP
     const newTgtTop = tgtEl.getBoundingClientRect().top;
     const delta = oldTgtTop - newTgtTop;
-
-    // FLIP：目标从旧位置滑入新位置
     tgtEl.style.transition = 'none';
     tgtEl.style.transform = `translateY(${delta}px)`;
-
     requestAnimationFrame(() => {
       tgtEl.style.transition = 'transform 0.35s ease';
       tgtEl.style.transform = '';
