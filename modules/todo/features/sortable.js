@@ -59,19 +59,24 @@ function enableSortable(listEl, options) {
     const srcEl = dragEl;
     if (!srcEl || !tgtEl || srcEl === tgtEl) return;
 
-    // FLIP：只动画目标元素滑入空白位
-    const rSrc = srcEl.getBoundingClientRect();
-    const rTgt = tgtEl.getBoundingClientRect();
-    tgtEl.style.transition = 'none';
-    tgtEl.style.transform = `translateY(${rSrc.top - rTgt.top}px)`;
+    // 记录旧位置
+    const oldTgtTop = tgtEl.getBoundingClientRect().top;
 
-    // 交换 DOM（空白位移到目标原位置）
+    // 先交换 DOM
     const p = srcEl.parentNode;
     const na = srcEl.nextSibling;
     const nb = tgtEl.nextSibling;
     if (na === tgtEl) p.insertBefore(tgtEl, srcEl);
     else if (nb === srcEl) p.insertBefore(srcEl, tgtEl);
     else { p.insertBefore(srcEl, nb); p.insertBefore(tgtEl, na); }
+
+    // 新位置 = 目标元素被移到了空白位处
+    const newTgtTop = tgtEl.getBoundingClientRect().top;
+    const delta = oldTgtTop - newTgtTop;
+
+    // FLIP：目标从旧位置滑入新位置
+    tgtEl.style.transition = 'none';
+    tgtEl.style.transform = `translateY(${delta}px)`;
 
     requestAnimationFrame(() => {
       tgtEl.style.transition = 'transform 0.35s ease';
