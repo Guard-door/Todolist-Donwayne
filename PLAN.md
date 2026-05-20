@@ -58,16 +58,24 @@
 
 ## 正在实现：拖拽排序
 
-### 交互模式：Edge 交换
+### 交互模式：空白位 + 链式单向滑动
 
-- 被拖元素透明化留白，浮动克隆跟随指针
-- 被拖元素中心越过目标中线 → 目标滑入填补 gap
-- 连续拖动可多次交换，松手后 save + render
+```
+拖 B 向下：
+  [A] [▢空白] [ C ] [ D ]      B 浮动跟随鼠标，原位变空白
+  [A] [ C↖ ] [▢空白] [ D ]    C 越过中线，单向滑入空白
+  [A] [  C  ] [ D↖ ] [▢空白]  D 越过中线，单向滑入空白
+松手：B 从鼠标处滑入最终空白位
+```
+
+- 被拖元素原位变空白（仅背景色）
+- 双向中线判定：向上用浮动 TOP 过目标 MIDLINE，向下用浮动 BOTTOM 过目标 MIDLINE
+- 仅相邻交换（一格一格链式传导），不跨元素跳跃
+- 被越过元素单向滑入空白位（0.35s），被拖元素不动画
 
 ### 技术方案
 
 - 独立模块 `modules/todo/features/sortable.js`
 - 接口：`enableSortable(listEl, { onSortEnd, isSameGroup })`
-- 桌面端 HTML5 DnD，移动端 Touch 300ms 长按
-- 动画：拖拽中 FLIP 单元素移动，松手统一 render
-- 所有 DOM 操作空值防护
+- 桌面端 HTML5 DnD，移动端 Touch 200ms 长按
+- 数据流单向：sortable 只负责 DOM + 动画，onSortEnd 回调更新数据
