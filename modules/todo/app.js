@@ -37,9 +37,11 @@ const isFirstVisit = todos === null;
 if (isFirstVisit) {
   todos = [];
 } else {
+  // 迁移旧数据
   if (todos.length > 0 && (todos[0].text !== undefined || todos[0].done !== undefined || todos[0].dueDate !== undefined)) {
     save();
   }
+  // 自动清理：删除 completed && deadline < today
   const before = todos.length;
   todos = todos.filter(t => {
     if (!t.completed) return true;
@@ -52,7 +54,7 @@ if (isFirstVisit) {
 /* ── 状态 ──────────────────────────────────────────────── */
 
 let selectedDeadline = null;
-let editingId = null;
+let editingId = null; // 编辑模式下的任务 id
 
 /* ── DOM 引用 ──────────────────────────────────────────── */
 
@@ -114,6 +116,7 @@ function render() {
     emptyState.classList.add('hidden');
   }
 
+  // 排序：未完成在上，已完成在下
   const sorted = [...todos].sort((a, b) => a.completed - b.completed);
   let sepInserted = false;
 
@@ -129,7 +132,6 @@ function render() {
     const li = document.createElement('li');
     li.className = 'todo-item' + (todo.completed ? ' completed' : '');
     li.dataset.id = todo.id;
-    if (sortableData) bindSortableItem(li, sortableData);
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -162,6 +164,7 @@ function render() {
 
     li.append(cb, body, del);
 
+    // 长按事件
     addLongPress(li, todo.id);
 
     todoList.appendChild(li);
@@ -235,32 +238,39 @@ let longPressTimer = null;
 let longPressId = null;
 
 function addLongPress(el, id) {
-  el.addEventListener('touchstart', (e) => {
+  let started = false;
+
+  function start(e) {
+    started = false;
     longPressTimer = setTimeout(() => {
-      if (touchDragging) return;
+      started = true;
       longPressId = id;
-      showContextMenu(e.touches[0]);
+      showContextMenu(e);
     }, 500);
+  }
+
+  function end() {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+
+  el.addEventListener('touchstart', (e) => {
+    start(e.touches[0]);
   }, { passive: true });
 
-  el.addEventListener('touchend', () => {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  });
-  el.addEventListener('touchmove', () => {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  });
+  el.addEventListener('touchend', end);
+  el.addEventListener('touchmove', end);
   el.addEventListener('contextmenu', (e) => {
     e.preventDefault();
+    clearTimeout(longPressTimer);
     longPressId = id;
     showContextMenu(e);
   });
 }
 
 function showContextMenu(e) {
-  const x = e.clientX || 100;
-  const y = e.clientY || 200;
+  const x = e.clientX || (e.touches && e.touches[0].clientX) || 100;
+  const y = e.clientY || (e.touches && e.touches[0].clientY) || 200;
   contextMenu.style.left = Math.min(x, window.innerWidth - 140) + 'px';
   contextMenu.style.top = Math.min(y, window.innerHeight - 60) + 'px';
   contextMenu.hidden = false;
@@ -281,43 +291,13 @@ if (ctxEdit) ctxEdit.addEventListener('click', () => {
   openModalForEdit(id);
 });
 
-/* ── 拖拽排序（可拔插模块） ────────────────────────────── */
-
-let sortableData = null;
-
-function initSortable() {
-  if (!todoList) return;
-  sortableData = todoList._sortableData;
-  if (!sortableData) {
-    enableSortable(todoList, {
-      onSortEnd(newOrder) {
-        const map = new Map(todos.map(t => [String(t.id), t]));
-        const reordered = [];
-        for (const id of newOrder) {
-          const t = map.get(id);
-          if (t) { reordered.push(t); map.delete(id); }
-        }
-        todos = reordered;
-        save();
-        render();
-      },
-      isSameGroup(id1, id2) {
-        const t1 = todos[findIndex(+id1)];
-        const t2 = todos[findIndex(+id2)];
-        if (!t1 || !t2) return false;
-        return t1.completed === t2.completed;
-      },
-      touchDelay: 300,
-    });
-    sortableData = todoList._sortableData;
-  }
-}
-
 /* ── 日历面板 ────────────────────────────────────────── */
 
 let calYear, calMonth;
 
-function todayStr() { return loadDateStr; }
+function todayStr() {
+  return loadDateStr;
+}
 
 function isPast(y, m, d) {
   return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` < loadDateStr;
@@ -330,17 +310,22 @@ function buildCalendar() {
   const firstDay = new Date(calYear, calMonth - 1, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth, 0).getDate();
 
-  for (let i = 0; i < firstDay; i++) calDays.appendChild(document.createElement('div'));
+  for (let i = 0; i < firstDay; i++) {
+    calDays.appendChild(document.createElement('div'));
+  }
 
   for (let d = 1; d <= daysInMonth; d++) {
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.className = 'cal-day';
     cell.textContent = d;
+
     const ds = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
     if (isPast(calYear, calMonth, d)) cell.classList.add('past');
     if (ds === todayStr()) cell.classList.add('today');
     if (ds === selectedDeadline) cell.classList.add('selected');
+
     if (!isPast(calYear, calMonth, d)) {
       cell.addEventListener('click', () => {
         selectedDeadline = ds;
@@ -350,18 +335,23 @@ function buildCalendar() {
         ddlCalendar.hidden = true;
       });
     }
+
     calDays.appendChild(cell);
   }
 }
 
 calPrev.addEventListener('click', () => {
-  if (calMonth === 1) { calMonth = 12; calYear--; } else calMonth--;
+  if (calMonth === 1) { calMonth = 12; calYear--; }
+  else { calMonth--; }
   buildCalendar();
 });
+
 calNext.addEventListener('click', () => {
-  if (calMonth === 12) { calMonth = 1; calYear++; } else calMonth++;
+  if (calMonth === 12) { calMonth = 1; calYear++; }
+  else { calMonth++; }
   buildCalendar();
 });
+
 calPrevYear.addEventListener('click', () => { calYear--; buildCalendar(); });
 calNextYear.addEventListener('click', () => { calYear++; buildCalendar(); });
 
@@ -378,7 +368,8 @@ ddlToggle.addEventListener('click', () => {
   if (ddlCalendar.hidden) {
     if (selectedDeadline) {
       const [y, m] = selectedDeadline.split('-');
-      calYear = +y; calMonth = +m;
+      calYear = +y;
+      calMonth = +m;
     } else {
       const now = new Date();
       calYear = now.getFullYear();
@@ -434,8 +425,11 @@ function closeModal() { modalOverlay.hidden = true; }
 function submitModal() {
   const content = modalContent.value.trim();
   if (!content) return;
-  if (editingId) update(editingId, content, selectedDeadline);
-  else add(content, selectedDeadline);
+  if (editingId) {
+    update(editingId, content, selectedDeadline);
+  } else {
+    add(content, selectedDeadline);
+  }
   closeModal();
 }
 
@@ -449,7 +443,7 @@ modalContent.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); submitModal(); }
 });
 
-/* ── Myday API ────────────────────────────────────────── */
+/* ── Myday API（供 Shell 调用）─────────────────────────── */
 
 function getMydayTodos() {
   return todos.filter(t => !t.completed && isToday(t.deadline));
@@ -463,14 +457,17 @@ function renderMydayList(container) {
   list.forEach(todo => {
     const li = document.createElement('li');
     li.className = 'myday-item' + (todo.completed ? ' completed' : '');
+
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.style.cssText = 'width:18px;height:18px;accent-color:#4a90d9;cursor:pointer;flex-shrink:0';
     cb.checked = todo.completed;
     cb.addEventListener('change', () => { toggle(todo.id); renderMydayList(container); });
+
     const span = document.createElement('span');
     span.className = 'myday-item-text';
     span.textContent = todo.content;
+
     li.append(cb, span);
     container.appendChild(li);
   });
@@ -479,6 +476,6 @@ function renderMydayList(container) {
 
 /* ── 初始化 ────────────────────────────────────────────── */
 
-initSortable();
 render();
+
 window.TodoModule = { getMydayTodos, renderMydayList, refresh: render };

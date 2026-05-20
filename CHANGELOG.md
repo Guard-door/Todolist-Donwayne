@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.7.0
+
+### 架构
+- 回退拖拽排序模块，移除 modules/todo/features/sortable.js
+- 恢复 app.js、style.css、index.html 至拖拽前状态
+
+## v1.6.2
+
+### 配置
+- 宪法新增 Brainstorming 强制规范
+
+## v1.6.1
+
+### 待办
+- 修复拖拽 initialSortable 顺序 + touch 事件坐标捕获
+
 ## v1.6.0
 
 ### 架构
