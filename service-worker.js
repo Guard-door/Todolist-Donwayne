@@ -1,10 +1,10 @@
-const CACHE_NAME = 'todo-app-v2';
+const APP_VERSION = '1.1.0';
+const CACHE_NAME = 'todo-app-v' + APP_VERSION;
 const ASSETS = [
   '.',
   'index.html',
   'css/style.css',
   'js/shell.js',
-  'modules/todo/index.html',
   'modules/todo/style.css',
   'modules/todo/app.js',
   'icon.svg',

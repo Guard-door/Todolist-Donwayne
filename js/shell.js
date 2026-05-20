@@ -97,6 +97,18 @@ mydayOverlay.addEventListener('click', closeMyday);
 
 if (location.protocol === 'https:' || location.protocol === 'http:') {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    navigator.serviceWorker.register('service-worker.js').then((reg) => {
+      reg.addEventListener('updatefound', () => {
+        const worker = reg.installing;
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            worker.postMessage('skipWaiting');
+          }
+        });
+      });
+    }).catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      location.reload();
+    });
   }
 }
