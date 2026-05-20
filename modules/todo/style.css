@@ -306,10 +306,18 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
 }
 
+.todo-item {
+  transition: transform 0.15s ease, margin 0.15s ease;
+}
+
 .todo-item.dragging { opacity: 0.5; }
-.todo-item.drag-over { border-top: 2px solid #4a90d9; }
-.todo-item.drag-under { border-bottom: 2px solid #4a90d9; }
-.touch-clone { box-shadow: 0 8px 30px rgba(0,0,0,0.2); border-radius: 10px; }
+
+.drag-gap {
+  height: 8px;
+  background: transparent;
+  transition: all 0.15s ease;
+  pointer-events: none;
+}
 
 /* 已完成分组顶部分隔 */
 .todo-separator {
