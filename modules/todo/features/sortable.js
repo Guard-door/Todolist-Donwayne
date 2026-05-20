@@ -114,6 +114,7 @@ function enableSortable(listEl, options) {
   /* ── 桌面端 DnD ─────────────────────── */
 
   let lastClientY = 0;
+  let lastDir = 0;
 
   function onDragStart(e) {
     dragId = this.dataset.id;
@@ -121,6 +122,7 @@ function enableSortable(listEl, options) {
     lastSwapped = null;
     active = true;
     lastClientY = e.clientY;
+    lastDir = 0;
     this.style.opacity = '0'; // 空白位
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragId);
@@ -131,6 +133,8 @@ function enableSortable(listEl, options) {
     if (!active || !dragId) return;
     e.dataTransfer.dropEffect = 'move';
     const dir = e.clientY - lastClientY;
+    if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
+    if (dir) lastDir = dir;
     lastClientY = e.clientY;
     const target = findSwapTarget(e.clientY, dir);
     if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
@@ -157,6 +161,7 @@ function enableSortable(listEl, options) {
       el.style.opacity = '0'; // 空白位
       floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
       lastClientY = cy;
+      lastDir = 0;
     }, opt.touchDelay);
   }
 
@@ -166,6 +171,8 @@ function enableSortable(listEl, options) {
       if (floating) floating.style.top = (e.touches[0].clientY - 30) + 'px';
       const cy = e.touches[0].clientY;
       const dir = cy - lastClientY;
+      if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
+      if (dir) lastDir = dir;
       lastClientY = cy;
       const target = findSwapTarget(cy, dir);
       if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
