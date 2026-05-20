@@ -105,7 +105,7 @@ function render() {
 
   if (todos.length === 0) {
     emptyState.classList.remove('hidden');
-    welcomeMsg.textContent = isFirstVisit ? '暂无任务，添加一条吧 ✨' : '所有任务都完成啦 🎉';
+    welcomeMsg.textContent = isFirstVisit ? 'Add To Work ✨' : 'All Done 🎉';
   } else {
     emptyState.classList.add('hidden');
   }

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.2
+
+### 待办
+- Myday 空状态提示改为 "No, be relax~"
+- 空任务列表提示改为 "Add To Work"
+
 ## v1.2.1
 
 ### 待办
