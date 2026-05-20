@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.2
+
+### 架构
+- 新增 start.bat / start.sh 本地开发服务器脚本（Python / npx 备选）
+- app.js 所有 DOM 引用增加空值检查，缺失时在控制台输出错误而非崩溃
+- 保持模块化 HTML 外部加载（fetch），要求通过 http://localhost 访问
+
 ## v1.4.1
 
 ### 架构

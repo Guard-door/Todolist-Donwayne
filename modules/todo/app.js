@@ -58,26 +58,32 @@ let editingId = null; // 编辑模式下的任务 id
 
 /* ── DOM 引用 ──────────────────────────────────────────── */
 
-const todoList = document.getElementById('todoList');
-const emptyState = document.getElementById('emptyState');
-const welcomeMsg = document.getElementById('welcomeMsg');
-const fabBtn = document.getElementById('fabBtn');
-const modalOverlay = document.getElementById('modalOverlay');
+function $el(id) {
+  const el = document.getElementById(id);
+  if (!el) console.error('[Todo] 缺少 DOM 元素: #' + id);
+  return el;
+}
+
+const todoList = $el('todoList');
+const emptyState = $el('emptyState');
+const welcomeMsg = $el('welcomeMsg');
+const fabBtn = $el('fabBtn');
+const modalOverlay = $el('modalOverlay');
 const modalTitle = document.querySelector('.modal-title');
-const modalContent = document.getElementById('modalContent');
-const ddlToggle = document.getElementById('ddlToggle');
-const ddlCalendar = document.getElementById('ddlCalendar');
-const calTitle = document.getElementById('calTitle');
-const calDays = document.getElementById('calDays');
-const calPrev = document.getElementById('calPrev');
-const calNext = document.getElementById('calNext');
-const calPrevYear = document.getElementById('calPrevYear');
-const calNextYear = document.getElementById('calNextYear');
-const ddlClear = document.getElementById('ddlClear');
-const modalCancel = document.getElementById('modalCancel');
-const modalConfirm = document.getElementById('modalConfirm');
-const contextMenu = document.getElementById('contextMenu');
-const ctxEdit = document.getElementById('ctxEdit');
+const modalContent = $el('modalContent');
+const ddlToggle = $el('ddlToggle');
+const ddlCalendar = $el('ddlCalendar');
+const calTitle = $el('calTitle');
+const calDays = $el('calDays');
+const calPrev = $el('calPrev');
+const calNext = $el('calNext');
+const calPrevYear = $el('calPrevYear');
+const calNextYear = $el('calNextYear');
+const ddlClear = $el('ddlClear');
+const modalCancel = $el('modalCancel');
+const modalConfirm = $el('modalConfirm');
+const contextMenu = $el('contextMenu');
+const ctxEdit = $el('ctxEdit');
 
 /* ── 工具函数 ──────────────────────────────────────────── */
 
@@ -276,10 +282,10 @@ function hideContextMenu() {
 }
 
 document.addEventListener('click', (e) => {
-  if (!contextMenu.contains(e.target)) hideContextMenu();
+  if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
 });
 
-ctxEdit.addEventListener('click', () => {
+if (ctxEdit) ctxEdit.addEventListener('click', () => {
   const id = longPressId;
   hideContextMenu();
   openModalForEdit(id);

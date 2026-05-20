@@ -4,6 +4,20 @@
 
 const APP_VERSION = '1.4.0';
 
+/* ── 加载 Todo 模块 ───────────────────────────────────── */
+
+function loadTodoModule() {
+  fetch('modules/todo/index.html')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('app-content').innerHTML = html;
+      const script = document.createElement('script');
+      script.src = 'modules/todo/app.js';
+      document.body.appendChild(script);
+    })
+    .catch(err => console.error('Todo 模块加载失败，请通过 http://localhost 访问:', err));
+}
+
 /* ── WiFi 图标（单一 SVG 动态绘制） ───────────────────── */
 
 const topWifiIcon = document.getElementById('topWifiIcon');
@@ -141,6 +155,7 @@ function initPWA() {
   }
 }
 
-/* ── 启动 PWA ────────────────────────────────────────── */
+/* ── 启动：加载 Todo → 初始化 PWA ───────────────────── */
 
+loadTodoModule();
 initPWA();
