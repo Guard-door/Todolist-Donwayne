@@ -386,11 +386,6 @@
 
 .drag-floating { transition: none !important; }
 
-.todo-item.drag-source {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  opacity: 0.85;
-}
-
 /* ── 空状态 ──────────────────────────────────────────────── */
 
 .empty-state {

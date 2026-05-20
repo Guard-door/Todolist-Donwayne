@@ -1,20 +1,17 @@
 /* ================================================================
-   sortable.js — 可拔插拖拽排序模块
+   sortable.js — 可拔插拖拽排序模块（Edge 风格：空白位 + 链式单向滑动）
 
    接口：enableSortable(listEl, {
      onSortEnd(newOrder)  // 排序完成回调，newOrder = [id, id, ...]
      isSameGroup(a, b)    // 同组判定（可选）
-     touchDelay: 300      // 长按触发时间
+     touchDelay: 200      // 长按触发时间
    })
-
-   数据流单向，不碰 localStorage/应用状态。
    ================================================================ */
 
 function enableSortable(listEl, options) {
   if (!listEl) return () => {};
   const opt = Object.assign({ touchDelay: 200 }, options);
 
-  let items = [];
   let dragId = null;
   let dragEl = null;
   let floating = null;
@@ -23,13 +20,12 @@ function enableSortable(listEl, options) {
   let touchTimer = null;
   let touchDragging = false;
 
-  function refreshItems() {
-    items = Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
+  function getItems() {
+    return Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
   }
 
-  function crossedMidline(clientY, el) {
-    const r = el.getBoundingClientRect();
-    return clientY < r.top + r.height / 2;
+  function indexOf(el) {
+    return getItems().indexOf(el);
   }
 
   function isSameGroup(id1, id2) {
@@ -57,23 +53,19 @@ function enableSortable(listEl, options) {
     floating = null;
   }
 
-  /* ── 交换 ───────────────────────────── */
+  /* ── 相邻交换 ───────────────────────── */
 
-  function performSwap(targetId) {
-    if (!isSameGroup(dragId, targetId)) return;
-    const srcEl = listEl.querySelector(`.todo-item[data-id="${dragId}"]`);
-    const tgtEl = listEl.querySelector(`.todo-item[data-id="${targetId}"]`);
+  function swapWithTarget(tgtEl) {
+    const srcEl = dragEl;
     if (!srcEl || !tgtEl || srcEl === tgtEl) return;
 
-    // FLIP
-    const rA = srcEl.getBoundingClientRect();
-    const rB = tgtEl.getBoundingClientRect();
-    srcEl.style.transition = 'none';
+    // FLIP：只动画目标元素滑入空白位
+    const rSrc = srcEl.getBoundingClientRect();
+    const rTgt = tgtEl.getBoundingClientRect();
     tgtEl.style.transition = 'none';
-    srcEl.style.transform = `translateY(${rB.top - rA.top}px)`;
-    tgtEl.style.transform = `translateY(${rA.top - rB.top}px)`;
+    tgtEl.style.transform = `translateY(${rSrc.top - rTgt.top}px)`;
 
-    // 交换 DOM
+    // 交换 DOM（空白位移到目标原位置）
     const p = srcEl.parentNode;
     const na = srcEl.nextSibling;
     const nb = tgtEl.nextSibling;
@@ -81,34 +73,55 @@ function enableSortable(listEl, options) {
     else if (nb === srcEl) p.insertBefore(srcEl, tgtEl);
     else { p.insertBefore(srcEl, nb); p.insertBefore(tgtEl, na); }
 
-    // 触发过渡
     requestAnimationFrame(() => {
-      srcEl.style.transition = 'transform 0.25s ease';
-      tgtEl.style.transition = 'transform 0.25s ease';
-      srcEl.style.transform = '';
+      tgtEl.style.transition = 'transform 0.35s ease';
       tgtEl.style.transform = '';
     });
 
-    lastSwapped = targetId;
+    lastSwapped = tgtEl.dataset.id;
+  }
+
+  function findSwapTarget(clientY, dir) {
+    const items = getItems();
+    const srcIdx = indexOf(dragEl);
+    if (srcIdx === -1) return null;
+
+    // 向上：顶部越过上方元素中线
+    if (dir < 0 && srcIdx > 0) {
+      const above = items[srcIdx - 1];
+      if (!isSameGroup(dragId, above.dataset.id)) return null;
+      const r = above.getBoundingClientRect();
+      if (clientY < r.top + r.height / 2) return above;
+    }
+    // 向下：底部越过下方元素中线
+    if (dir > 0 && srcIdx < items.length - 1) {
+      const below = items[srcIdx + 1];
+      if (!isSameGroup(dragId, below.dataset.id)) return null;
+      const r = below.getBoundingClientRect();
+      if (clientY > r.top + r.height / 2) return below;
+    }
+    return null;
   }
 
   /* ── 清理 ───────────────────────────── */
 
   function cleanup() {
     removeFloating();
-    if (dragEl) dragEl.classList.remove('drag-source');
+    if (dragEl) dragEl.style.opacity = '';
     dragId = null; dragEl = null; lastSwapped = null; active = false;
   }
 
   /* ── 桌面端 DnD ─────────────────────── */
 
+  let lastClientY = 0;
+
   function onDragStart(e) {
-    refreshItems();
     dragId = this.dataset.id;
     dragEl = this;
     lastSwapped = null;
     active = true;
-    this.classList.add('drag-source');
+    lastClientY = e.clientY;
+    this.style.opacity = '0'; // 空白位
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragId);
   }
@@ -117,18 +130,15 @@ function enableSortable(listEl, options) {
     e.preventDefault();
     if (!active || !dragId) return;
     e.dataTransfer.dropEffect = 'move';
-    const target = e.target?.closest?.('.todo-item');
-    if (!target) return;
-    const tid = target.dataset.id;
-    if (!tid || tid === dragId || tid === lastSwapped) return;
-    if (crossedMidline(e.clientY, target)) performSwap(tid);
+    const dir = e.clientY - lastClientY;
+    lastClientY = e.clientY;
+    const target = findSwapTarget(e.clientY, dir);
+    if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
   }
 
   function onDrop() {
     if (!active) return;
-    const newOrder = Array.from(
-      listEl.querySelectorAll('.todo-item:not(.drag-floating)')
-    ).map(el => el.dataset.id);
+    const newOrder = getItems().map(el => el.dataset.id);
     cleanup();
     if (opt.onSortEnd) opt.onSortEnd(newOrder);
   }
@@ -140,13 +150,13 @@ function enableSortable(listEl, options) {
     const id = this.dataset.id;
     const cx = e.touches[0].clientX;
     const cy = e.touches[0].clientY;
-    refreshItems();
     touchTimer = setTimeout(() => {
       touchTimer = null;
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
-      el.classList.add('drag-source');
+      el.style.opacity = '0'; // 空白位
       floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
+      lastClientY = cy;
     }, opt.touchDelay);
   }
 
@@ -154,17 +164,11 @@ function enableSortable(listEl, options) {
     if (touchDragging) {
       e.preventDefault();
       if (floating) floating.style.top = (e.touches[0].clientY - 30) + 'px';
-      const floatTop = floating?.getBoundingClientRect().top || 0;
-      const fx = (floating?.getBoundingClientRect().left || 0) + (floating?.offsetWidth || 0) / 2;
-      const target = document.elementFromPoint(
-        fx || e.touches[0].clientX, floatTop + 10
-      )?.closest?.('.todo-item');
-      if (target?.dataset?.id && target.dataset.id !== dragId && target.dataset.id !== lastSwapped) {
-        // 浮动元素顶部超过目标中线 → 交换
-        if (floatTop < target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2) {
-          performSwap(target.dataset.id);
-        }
-      }
+      const cy = e.touches[0].clientY;
+      const dir = cy - lastClientY;
+      lastClientY = cy;
+      const target = findSwapTarget(cy, dir);
+      if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
       return;
     }
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
@@ -173,9 +177,7 @@ function enableSortable(listEl, options) {
   function onTouchEnd() {
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (touchDragging) {
-      const newOrder = Array.from(
-        listEl.querySelectorAll('.todo-item:not(.drag-floating)')
-      ).map(el => el.dataset.id);
+      const newOrder = getItems().map(el => el.dataset.id);
       cleanup();
       touchDragging = false;
       if (opt.onSortEnd) opt.onSortEnd(newOrder);
