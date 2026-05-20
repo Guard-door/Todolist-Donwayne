@@ -129,6 +129,7 @@ function enableSortable(listEl, options) {
     lastClientY = e.clientY;
     lastDir = 0;
     this.style.opacity = '0'; // 空白位
+    floating = createFloating(this, this.getBoundingClientRect().left, e.clientY - 30);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragId);
   }
@@ -137,6 +138,7 @@ function enableSortable(listEl, options) {
     e.preventDefault();
     if (!active || !dragId) return;
     e.dataTransfer.dropEffect = 'move';
+    if (floating) floating.style.top = (e.clientY - 30) + 'px';
     const dir = e.clientY - lastClientY;
     if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
     if (dir) lastDir = dir;
