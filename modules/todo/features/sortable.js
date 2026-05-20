@@ -42,7 +42,7 @@ function enableSortable(listEl, options) {
       'position:fixed', `left:${x}px`, `top:${y}px`,
       `width:${el.offsetWidth}px`, 'z-index:500', 'pointer-events:none',
       'box-shadow:0 12px 40px rgba(0,0,0,0.22)', 'border-radius:10px',
-      'background:#fff', 'transform:scale(1.02)'
+      'transform:scale(1.02)'
     ].join(';');
     document.body.appendChild(clone);
     return clone;
@@ -159,6 +159,12 @@ function enableSortable(listEl, options) {
   /* ── 移动端 Touch ───────────────────── */
 
   function onTouchStart(e) {
+    // 清理可能残留的状态
+    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+    if (floating) { removeFloating(); }
+    if (dragEl) { dragEl.style.opacity = ''; dragEl = null; }
+    active = false; touchDragging = false;
+
     const el = this;
     const id = this.dataset.id;
     const cx = e.touches[0].clientX;
@@ -167,7 +173,7 @@ function enableSortable(listEl, options) {
       touchTimer = null;
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
-      el.style.opacity = '0'; // 空白位
+      el.style.opacity = '0';
       floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
       lastClientY = cy;
       lastDir = 0;
@@ -205,7 +211,7 @@ function enableSortable(listEl, options) {
   listEl.addEventListener('dragover', onDragOver);
   listEl.addEventListener('drop', onDrop);
   document.addEventListener('dragend', onDrop);
-  listEl._sortableData = { onDragStart, onTouchStart, onTouchMove, onTouchEnd };
+  listEl._sortableData = { onDragStart, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: onTouchEnd };
 
   return () => { cleanup(); if (touchTimer) clearTimeout(touchTimer); };
 }
@@ -217,4 +223,5 @@ function bindSortableItem(li, data) {
   li.addEventListener('touchstart', data.onTouchStart, { passive: false });
   li.addEventListener('touchmove', data.onTouchMove, { passive: false });
   li.addEventListener('touchend', data.onTouchEnd);
+  li.addEventListener('touchcancel', data.onTouchCancel);
 }
