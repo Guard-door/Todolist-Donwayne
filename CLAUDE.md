@@ -20,11 +20,15 @@ MAJOR.MINOR.PATCH  例 v1.1.0
 
 递增后同步 `service-worker.js` 的 `APP_VERSION` 和 `CHANGELOG.md`。
 
-## 推送规则
+## 推送与发布
 
-- **绝对禁止自动推送**。仅用户说"推送"或"push"时才推送
-- 推送前确认本地 commit 已就绪
-- 推送目标：`master` 分支，同时推送标签
+| 指令 | 行为 | 标签 | Release |
+|------|------|------|---------|
+| **推送** | `git push origin master` | 不打标签 | 不触发 |
+| **发布** | 先打 `vX.Y.Z` 标签，再 `git push --tags` | 打标签 | 触发 |
+
+- **绝对禁止自动推送**
+- PATCH 用"推送"，MINOR/MAJOR 用"发布"
 - 用户说"合并到 main"时才执行 `git merge master → main`
 
 ## Service Worker 版本
