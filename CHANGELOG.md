@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.0
+
+### 配置
+- 新增 GitHub Actions 自动 Release（推送 tag 时自动从 CHANGELOG 提取内容创建 Release）
+
 ## v1.1.3
 
 ### 待办
