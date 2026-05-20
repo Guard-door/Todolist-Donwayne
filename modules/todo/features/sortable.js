@@ -37,7 +37,7 @@ function enableSortable(listEl, options) {
 
   function createFloating(el, x, y) {
     const clone = el.cloneNode(true);
-    clone.className = 'todo-item drag-floating';
+    clone.classList.add('drag-floating');
     clone.style.cssText = [
       'position:fixed', `left:${x}px`, `top:${y}px`,
       `width:${el.offsetWidth}px`, 'z-index:500', 'pointer-events:none',
@@ -51,6 +51,24 @@ function enableSortable(listEl, options) {
   function removeFloating() {
     if (floating?.parentNode) floating.parentNode.removeChild(floating);
     floating = null;
+  }
+
+  function clampFloatingY(y) {
+    const sep = listEl.querySelector('.todo-separator');
+    if (!sep || !dragEl) return y;
+    const sepRect = sep.getBoundingClientRect();
+    const isCompleted = dragEl.classList.contains('completed');
+    if (isCompleted) {
+      // 已完成不能拖到分隔线上方
+      const minY = sepRect.bottom;
+      if (y < minY) return minY;
+    } else {
+      // 未完成不能拖到分隔线下方
+      const h = floating ? floating.offsetHeight : 56;
+      const maxY = sepRect.top - h;
+      if (y + h > maxY) return maxY;
+    }
+    return y;
   }
 
   /* ── 相邻交换 ───────────────────────── */
@@ -140,7 +158,7 @@ function enableSortable(listEl, options) {
     e.preventDefault();
     if (!active || !dragId) return;
     e.dataTransfer.dropEffect = 'move';
-    if (floating) floating.style.top = (e.clientY - 30) + 'px';
+    if (floating) floating.style.top = clampFloatingY(e.clientY - 30) + 'px';
     const dir = e.clientY - lastClientY;
     if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
     if (dir) lastDir = dir;
@@ -185,7 +203,7 @@ function enableSortable(listEl, options) {
   function onTouchMove(e) {
     if (touchDragging) {
       e.preventDefault();
-      if (floating) floating.style.top = (e.touches[0].clientY - 30) + 'px';
+      if (floating) floating.style.top = clampFloatingY(e.touches[0].clientY - 30) + 'px';
       const cy = e.touches[0].clientY;
       const dir = cy - lastClientY;
       if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
