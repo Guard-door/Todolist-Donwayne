@@ -19,6 +19,7 @@ function enableSortable(listEl, options) {
   let lastSwapped = null;
   let touchTimer = null;
   let touchDragging = false;
+  let dragLocked = false;
 
   function getItems() {
     return Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
@@ -137,6 +138,14 @@ function enableSortable(listEl, options) {
     dragId = null; dragEl = null; lastSwapped = null; active = false;
   }
 
+  function resetDragState() {
+    removeFloating();
+    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+    if (dragEl) dragEl.style.opacity = '';
+    dragId = null; dragEl = null; lastSwapped = null;
+    active = false; touchDragging = false; dragLocked = false;
+  }
+
   /* ── 桌面端 DnD ─────────────────────── */
 
   let lastClientY = 0;
@@ -170,21 +179,17 @@ function enableSortable(listEl, options) {
 
   function onDrop() {
     if (!active) return;
-    removeFloating();
-    if (dragEl) dragEl.style.opacity = '';
-    dragId = null; dragEl = null; lastSwapped = null; active = false;
     const newOrder = getItems().map(el => el.dataset.id);
+    resetDragState();
     if (opt.onSortEnd) opt.onSortEnd(newOrder);
   }
 
   /* ── 移动端 Touch ───────────────────── */
 
   function onTouchStart(e) {
-    // 清理可能残留的状态
-    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
-    if (floating) { removeFloating(); }
-    if (dragEl) { dragEl.style.opacity = ''; dragEl = null; }
-    active = false; touchDragging = false;
+    // 防重入
+    if (dragLocked) return;
+    dragLocked = true;
 
     const el = this;
     const id = this.dataset.id;
@@ -218,13 +223,10 @@ function enableSortable(listEl, options) {
   }
 
   function onTouchEnd() {
-    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; return; }
+    if (touchTimer) { resetDragState(); return; }
     if (touchDragging) {
-      touchDragging = false;
-      removeFloating();
-      if (dragEl) dragEl.style.opacity = '';
-      dragId = null; dragEl = null; lastSwapped = null; active = false;
       const newOrder = getItems().map(el => el.dataset.id);
+      resetDragState();
       if (opt.onSortEnd) opt.onSortEnd(newOrder);
     }
   }
@@ -236,7 +238,7 @@ function enableSortable(listEl, options) {
   document.addEventListener('dragend', onDrop);
   listEl._sortableData = { onDragStart, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: onTouchEnd };
 
-  return () => { cleanup(); if (touchTimer) clearTimeout(touchTimer); };
+  return () => { resetDragState(); };
 }
 
 function bindSortableItem(li, data) {
