@@ -247,7 +247,10 @@ function moveFloating(el, _, y) {
 }
 
 function removeFloating() {
-  if (dragFloating) { document.body.removeChild(dragFloating); dragFloating = null; }
+  if (dragFloating && dragFloating.parentNode) {
+    dragFloating.parentNode.removeChild(dragFloating);
+  }
+  dragFloating = null;
 }
 
 function cleanupDrag() {
