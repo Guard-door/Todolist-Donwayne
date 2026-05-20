@@ -19,7 +19,6 @@ function enableSortable(listEl, options) {
   let lastSwapped = null;
   let touchTimer = null;
   let touchDragging = false;
-  let dragLocked = false;
 
   function getItems() {
     return Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
@@ -143,7 +142,7 @@ function enableSortable(listEl, options) {
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (dragEl) dragEl.style.opacity = '';
     dragId = null; dragEl = null; lastSwapped = null;
-    active = false; touchDragging = false; dragLocked = false;
+    active = false; touchDragging = false;
   }
 
   /* ── 桌面端 DnD ─────────────────────── */
@@ -188,9 +187,6 @@ function enableSortable(listEl, options) {
 
   function onTouchStart(e) {
     e.preventDefault();
-    // 防重入
-    if (dragLocked) return;
-    dragLocked = true;
 
     const el = this;
     const id = this.dataset.id;
