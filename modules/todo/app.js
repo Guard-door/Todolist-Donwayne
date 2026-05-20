@@ -179,62 +179,121 @@ function render() {
   });
 }
 
-/* ── 拖拽排序 ────────────────────────────────────────── */
+/* ── 拖拽排序（Edge 风格：单元素交换 + 中线判定） ───────── */
 
 let dragSrcId = null;
 let dragSrcEl = null;
-let dragInsertIdx = -1;
-let touchClone = null;
+let dragLastSwapped = null;
+let dragFloating = null;
+let dragActive = false;
 let touchStartY = 0;
 let touchStartTime = 0;
-let touchDragActive = false;
-const indicator = document.createElement('div');
-indicator.className = 'drag-indicator';
-document.body.appendChild(indicator);
+let touchDragging = false;
 
 function getViewItems() {
   return [...todos].sort((a, b) => a.completed - b.completed);
 }
 
 function isSameGroup(id1, id2) {
-  const v = getViewItems();
-  const a = v.find(t => t.id === +id1);
-  const b = v.find(t => t.id === +id2);
-  if (!a || !b) return false;
-  return a.completed === b.completed;
+  const t1 = todos[findIndex(+id1)];
+  const t2 = todos[findIndex(+id2)];
+  if (!t1 || !t2) return false;
+  return t1.completed === t2.completed;
 }
 
-/* 从 clientY 计算应在哪个可见项之前插入 */
-function insertIdxFromY(clientY) {
-  const items = todoList.querySelectorAll('.todo-item:not(.drag-hidden)');
-  let idx = 0;
-  for (const el of items) {
-    const r = el.getBoundingClientRect();
-    if (clientY < r.top + r.height / 2) return idx;
-    idx++;
+/* 中线判定：被拖元素顶部/底部是否越过目标中线 */
+function crossedMidline(dragY, targetEl) {
+  const r = targetEl.getBoundingClientRect();
+  const mid = r.top + r.height / 2;
+  return { crossed: true, above: dragY < mid };
+}
+
+/* FLIP 动画交换两个可见元素 */
+function animateElementSwap(elA, elB) {
+  const rA = elA.getBoundingClientRect();
+  const rB = elB.getBoundingClientRect();
+  const dxA = rB.left - rA.left;
+  const dyA = rB.top - rA.top;
+  const dxB = rA.left - rB.left;
+  const dyB = rA.top - rB.top;
+
+  elA.style.transition = 'none';
+  elB.style.transition = 'none';
+  elA.style.transform = `translate(${dxA}px,${dyA}px)`;
+  elB.style.transform = `translate(${dxB}px,${dyB}px)`;
+
+  requestAnimationFrame(() => {
+    elA.style.transition = 'transform 0.22s ease';
+    elB.style.transition = 'transform 0.22s ease';
+    elA.style.transform = '';
+    elB.style.transform = '';
+  });
+}
+
+/* 创建浮动拖拽元素 */
+function createFloating(srcEl, x, y) {
+  const clone = srcEl.cloneNode(true);
+  clone.className = 'todo-item drag-floating';
+  clone.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    width:${srcEl.offsetWidth}px; z-index:500; pointer-events:none;
+    box-shadow:0 12px 40px rgba(0,0,0,0.22); border-radius:10px;
+    background:#fff; transform:scale(1.03);
+  `;
+  document.body.appendChild(clone);
+  return clone;
+}
+
+function moveFloating(el, x, y) {
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+}
+
+function removeFloating() {
+  if (dragFloating) { document.body.removeChild(dragFloating); dragFloating = null; }
+}
+
+function cleanupDrag() {
+  removeFloating();
+  if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
+  dragSrcId = null;
+  dragSrcEl = null;
+  dragLastSwapped = null;
+  dragActive = false;
+  touchDragging = false;
+}
+
+/* 执行一次交换 */
+function performSwap(targetId) {
+  const srcIdx = findIndex(+dragSrcId);
+  const tgtIdx = findIndex(+targetId);
+  if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
+  if (!isSameGroup(dragSrcId, targetId)) return;
+
+  // 交换数组
+  [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
+
+  // FLIP 动画
+  const viewSorted = getViewItems();
+  const srcViewEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
+  const tgtViewEl = todoList.querySelector(`.todo-item[data-id="${targetId}"]`);
+  if (srcViewEl && tgtViewEl && srcViewEl !== tgtViewEl) {
+    animateElementSwap(srcViewEl, tgtViewEl);
   }
-  return items.length;
-}
 
-/* 蓝色指示线定位 */
-function moveIndicator(clientY) {
-  const items = todoList.querySelectorAll('.todo-item:not(.drag-hidden)');
-  if (items.length === 0) { indicator.style.display = 'none'; return; }
-  const idx = insertIdxFromY(clientY);
-  const listRect = todoList.getBoundingClientRect();
-  if (idx >= items.length) {
-    const last = items[items.length - 1];
-    indicator.style.top = (last.getBoundingClientRect().bottom - listRect.top) + 'px';
-  } else {
-    indicator.style.top = (items[idx].getBoundingClientRect().top - listRect.top) + 'px';
+  // 交换 DOM 位置
+  if (srcViewEl && tgtViewEl && srcViewEl !== tgtViewEl) {
+    const next = tgtViewEl.nextSibling;
+    if (next === srcViewEl) {
+      tgtViewEl.parentNode.insertBefore(tgtViewEl, srcViewEl.nextSibling);
+    } else {
+      tgtViewEl.parentNode.insertBefore(srcViewEl, next);
+    }
+    dragSrcEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
   }
-  indicator.style.left = '0';
-  indicator.style.width = '100%';
-  indicator.style.display = 'block';
-}
 
-function hideIndicator() {
-  indicator.style.display = 'none';
+  dragLastSwapped = targetId;
+  save();
 }
 
 /* ── 桌面端 ──────────────────────────────────────────── */
@@ -242,38 +301,36 @@ function hideIndicator() {
 function onDragStart(e) {
   dragSrcId = this.dataset.id;
   dragSrcEl = this;
+  dragLastSwapped = null;
+  dragActive = true;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', dragSrcId);
-  // 延迟隐藏源元素，让浏览器先截取拖拽图像
   requestAnimationFrame(() => { this.classList.add('drag-hidden'); });
 }
 
 function onDragEnd() {
-  if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
-  hideIndicator();
-  dragSrcId = null;
-  dragSrcEl = null;
-  dragInsertIdx = -1;
+  cleanupDrag();
+  save();
+  render();
 }
 
 function onDragOver(e) {
   e.preventDefault();
-  if (!dragSrcId) return;
+  if (!dragActive || !dragSrcId) return;
   e.dataTransfer.dropEffect = 'move';
-  if (dragSrcId !== this.dataset.id && isSameGroup(dragSrcId, this.dataset.id)) {
-    moveIndicator(e.clientY);
-  }
+  const targetId = this.dataset.id;
+  if (targetId === dragSrcId || targetId === dragLastSwapped) return;
+  if (!isSameGroup(dragSrcId, targetId)) return;
+
+  const { crossed } = crossedMidline(e.clientY, this);
+  if (crossed) performSwap(targetId);
 }
 
 function onDrop(e) {
   e.preventDefault();
-  if (!dragSrcId || dragSrcId === this.dataset.id) return;
-  const idx = insertIdxFromY(e.clientY);
-  commitReorder(dragSrcId, idx);
-  if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
-  hideIndicator();
-  dragSrcId = null;
-  dragSrcEl = null;
+  cleanupDrag();
+  save();
+  render();
 }
 
 /* ── 移动端触摸拖拽 ──────────────────────────────────── */
@@ -281,17 +338,23 @@ function onDrop(e) {
 function onTouchDnDStart(e) {
   touchStartY = e.touches[0].clientY;
   touchStartTime = Date.now();
-  touchDragActive = false;
 }
 
 function onTouchDnDMove(e) {
-  if (touchDragActive) {
+  if (touchDragging) {
     e.preventDefault();
-    touchClone.style.top = (e.touches[0].clientY - 30) + 'px';
-    const idx = insertIdxFromY(e.touches[0].clientY);
-    if (idx !== dragInsertIdx) {
-      dragInsertIdx = idx;
-      moveIndicator(e.touches[0].clientY);
+    const cx = dragFloating.getBoundingClientRect().left;
+    moveFloating(dragFloating, cx, e.touches[0].clientY - 30);
+
+    const target = document.elementFromPoint(
+      dragFloating.getBoundingClientRect().left + dragFloating.offsetWidth / 2,
+      e.touches[0].clientY
+    )?.closest('.todo-item:not(.drag-hidden)');
+    if (target && target.dataset.id && target.dataset.id !== dragSrcId && target.dataset.id !== dragLastSwapped) {
+      if (isSameGroup(dragSrcId, target.dataset.id)) {
+        const { crossed } = crossedMidline(e.touches[0].clientY, target);
+        if (crossed) performSwap(target.dataset.id);
+      }
     }
     return;
   }
@@ -299,78 +362,28 @@ function onTouchDnDMove(e) {
   const dy = Math.abs(e.touches[0].clientY - touchStartY);
   const dt = Date.now() - touchStartTime;
   if (dy > 8 || dt > 400) {
-    touchDragActive = true;
+    touchDragging = true;
     clearTimeout(longPressTimer);
     longPressTimer = null;
     e.preventDefault();
 
     dragSrcId = this.dataset.id;
     dragSrcEl = this;
+    dragLastSwapped = null;
+    dragActive = true;
     this.classList.add('drag-hidden');
 
-    const li = this;
-    const rect = li.getBoundingClientRect();
-    touchClone = li.cloneNode(true);
-    touchClone.className = 'todo-item touch-clone';
-    touchClone.style.cssText = `
-      position:fixed; left:${rect.left}px; top:${e.touches[0].clientY - 30}px;
-      width:${rect.width}px; z-index:500; pointer-events:none; opacity:0.5;
-      box-shadow:0 8px 30px rgba(0,0,0,0.18); border-radius:10px;
-      background:#fff;
-    `;
-    document.body.appendChild(touchClone);
+    const rect = this.getBoundingClientRect();
+    dragFloating = createFloating(this, rect.left, e.touches[0].clientY - 30);
   }
 }
 
 function onTouchDnDEnd() {
-  if (touchDragActive) {
-    if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
-    if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
-    hideIndicator();
-    if (dragSrcId && dragInsertIdx >= 0) {
-      commitReorder(dragSrcId, dragInsertIdx);
-    }
-    dragSrcId = null;
-    dragSrcEl = null;
-    dragInsertIdx = -1;
-    touchDragActive = false;
-    return;
+  if (touchDragging) {
+    cleanupDrag();
+    save();
+    render();
   }
-}
-
-/* ── 提交重排 ────────────────────────────────────────── */
-
-function commitReorder(srcId, toViewIdx) {
-  const view = getViewItems();
-  const srcViewIdx = view.findIndex(t => t.id === +srcId);
-  if (srcViewIdx === -1) return;
-
-  // 限制同组
-  let destViewIdx = toViewIdx;
-  if (destViewIdx < 0) destViewIdx = 0;
-  if (destViewIdx > view.length) destViewIdx = view.length;
-  // 确保目标位置与源同组
-  const srcCompleted = view[srcViewIdx].completed;
-  if (destViewIdx > 0 && view[Math.min(destViewIdx - 1, view.length - 1)].completed !== srcCompleted) destViewIdx = srcViewIdx;
-  if (destViewIdx < view.length && view[destViewIdx] && view[destViewIdx].completed !== srcCompleted) destViewIdx = srcViewIdx;
-  if (destViewIdx === srcViewIdx) return;
-
-  const srcArrIdx = findIndex(+srcId);
-  const [moved] = todos.splice(srcArrIdx, 1);
-
-  let insertArrIdx;
-  if (destViewIdx === 0) {
-    insertArrIdx = 0;
-  } else {
-    const anchor = view[destViewIdx > srcViewIdx ? destViewIdx : destViewIdx - 1];
-    insertArrIdx = findIndex(anchor.id);
-    if (destViewIdx <= srcViewIdx) insertArrIdx++;
-    if (srcArrIdx < insertArrIdx) insertArrIdx--;
-  }
-
-  todos.splice(insertArrIdx, 0, moved);
-  save();
-  render();
 }
 
 /* ── CRUD ──────────────────────────────────────────────── */

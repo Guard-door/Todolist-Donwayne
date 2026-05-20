@@ -308,7 +308,7 @@
 }
 
 .todo-item {
-  transition: transform 0.2s ease;
+  transition: transform 0.22s ease;
 }
 
 .todo-item.drag-hidden {
@@ -321,19 +321,9 @@
   opacity: 0;
 }
 
-.drag-indicator {
-  position: absolute;
-  height: 2px;
-  background: #4a90d9;
-  transition: top 0.12s ease;
-  pointer-events: none;
-  z-index: 400;
-  display: none;
-  border-radius: 1px;
-}
-
-.touch-clone {
+.drag-floating {
   transition: none !important;
+  opacity: 0.9;
 }
 
 /* 已完成分组顶部分隔 */
