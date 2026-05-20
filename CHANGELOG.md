@@ -1,81 +1,12 @@
 # Changelog
 
-## v1.7.0
-
-### 架构
-- 回退拖拽排序模块，移除 modules/todo/features/sortable.js
-- 恢复 app.js、style.css、index.html 至拖拽前状态
-
-## v1.6.2
-
-### 配置
-- 宪法新增 Brainstorming 强制规范
-
-## v1.6.1
-
-### 待办
-- 修复拖拽 initialSortable 顺序 + touch 事件坐标捕获
-
-## v1.6.0
-
-### 架构
-- 拖拽排序抽取为独立可拔插模块 modules/todo/features/sortable.js
-- app.js 一行 initSortable() 启用，onSortEnd 回调解耦
-
-### 拖拽
-- 缝隙判定（最近间隙即为插入位），占位符 + FLIP 让位动画
-- 移动端 touchstart 300ms 长按触发
-
-## v1.5.7
-
-### 待办
-- 修复 touchMoved 变量引用错误 + DOM 交换 NotFoundError
-
-## v1.5.6
-
-### 待办
-- 修复 removeFloating parentNode 空值崩溃
-
-## v1.5.5
-
-### 待办
-- 拖拽浮动元素锁定水平位置，仅纵向跟随
-- 源位置保留空白直到中线被越过才补位
-- 去除透明效果，交换通过 FLIP 动画完成
-
-## v1.5.4
-
-### 待办
-- 拖拽排序改为单元素交换 + 中线判定模式（Edge 风格）
-- 交换元素 FLIP 动画，被拖元素浮动加深阴影，其他元素静止
-
-## v1.5.3
-
-### 待办
-- 拖拽排序重构：源元素隐藏让位 + 蓝色指示线 + transform 过渡
-- 移动端长按触发拖拽，禁止滚动，幽灵克隆体跟随手指
-
-## v1.5.2
-
-### 待办
-- 修复 onDragLeave 未定义错误
-
-## v1.5.1
-
-### 待办
-- 拖拽排序改为 Edge 垂直标签页风格：其他任务实时让位形成间隙
-- CSS transition 平滑动画，移动端飘浮克隆体跟随手指
-
-## v1.5.0
-
-### 待办
-- 新增拖拽排序（桌面 Drag and Drop + 移动端触摸拖拽）
-- 拖动源 50% 透明度，目标位置蓝色指示线，移动端飘浮克隆体
-
 ## v1.4.5
 
 ### 设置
 - 面板宽度缩小为 280px，移除标题文字
+
+### 配置
+- 宪法新增 Brainstorming 强制规范
 
 ## v1.4.4
 
