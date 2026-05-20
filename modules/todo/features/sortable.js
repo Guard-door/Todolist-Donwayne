@@ -133,7 +133,7 @@ function enableSortable(listEl, options) {
 
   function cleanup() {
     removeFloating();
-    if (dragEl) { dragEl.style.opacity = ''; dragEl.classList.remove('drag-blank'); }
+    if (dragEl) dragEl.style.opacity = '';
     dragId = null; dragEl = null; lastSwapped = null; active = false;
   }
 
@@ -149,8 +149,7 @@ function enableSortable(listEl, options) {
     active = true;
     lastClientY = e.clientY;
     lastDir = 0;
-    if (this.classList.contains('completed')) this.classList.add('drag-blank');
-    else this.style.opacity = '0';
+    this.style.opacity = '0';
     floating = createFloating(this, this.getBoundingClientRect().left, e.clientY - 30);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragId);
@@ -172,7 +171,7 @@ function enableSortable(listEl, options) {
   function onDrop() {
     if (!active) return;
     removeFloating();
-    if (dragEl) { dragEl.style.opacity = ''; dragEl.classList.remove('drag-blank'); }
+    if (dragEl) dragEl.style.opacity = '';
     dragId = null; dragEl = null; lastSwapped = null; active = false;
     const newOrder = getItems().map(el => el.dataset.id);
     if (opt.onSortEnd) opt.onSortEnd(newOrder);
@@ -184,7 +183,7 @@ function enableSortable(listEl, options) {
     // 清理可能残留的状态
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (floating) { removeFloating(); }
-    if (dragEl) { dragEl.style.opacity = ''; dragEl.classList.remove('drag-blank'); dragEl = null; }
+    if (dragEl) { dragEl.style.opacity = ''; dragEl = null; }
     active = false; touchDragging = false;
 
     const el = this;
@@ -195,8 +194,7 @@ function enableSortable(listEl, options) {
       touchTimer = null;
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
-      if (el.classList.contains('completed')) el.classList.add('drag-blank');
-      else el.style.opacity = '0';
+      el.style.opacity = '0';
       floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
       lastClientY = cy;
       lastDir = 0;
