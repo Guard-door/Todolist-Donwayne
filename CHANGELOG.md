@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.1
+
+### 架构
+- 修复 file:// CORS：Todo HTML 恢复内联，CSS/JS 保持模块化
+- 移除动态 XHR 加载，恢复静态脚本顺序加载
+
 ## v1.4.0
 
 ### 设置

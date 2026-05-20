@@ -4,27 +4,6 @@
 
 const APP_VERSION = '1.4.0';
 
-/* ── 加载 Todo 模块 ───────────────────────────────────── */
-
-function loadTodoHTML(cb) {
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', 'modules/todo/index.html');
-  xhr.onload = () => {
-    document.getElementById('app-content').innerHTML = xhr.responseText;
-    cb();
-  };
-  xhr.onerror = () => cb();
-  xhr.send();
-}
-
-function loadTodoJS(cb) {
-  const script = document.createElement('script');
-  script.src = 'modules/todo/app.js';
-  script.onload = cb;
-  script.onerror = cb;
-  document.body.appendChild(script);
-}
-
 /* ── WiFi 图标（单一 SVG 动态绘制） ───────────────────── */
 
 const topWifiIcon = document.getElementById('topWifiIcon');
@@ -162,10 +141,6 @@ function initPWA() {
   }
 }
 
-/* ── 启动：先加载 Todo 模块，再初始化 Shell ────────────── */
+/* ── 启动 PWA ────────────────────────────────────────── */
 
-loadTodoHTML(() => {
-  loadTodoJS(() => {
-    initPWA();
-  });
-});
+initPWA();
