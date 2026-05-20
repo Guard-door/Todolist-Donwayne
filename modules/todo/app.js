@@ -230,7 +230,6 @@ function animateElementSwap(elA, elB) {
   });
 }
 
-/* 创建浮动拖拽元素 */
 function createFloating(srcEl, x, y) {
   const clone = srcEl.cloneNode(true);
   clone.className = 'todo-item drag-floating';
@@ -238,14 +237,12 @@ function createFloating(srcEl, x, y) {
     position:fixed; left:${x}px; top:${y}px;
     width:${srcEl.offsetWidth}px; z-index:500; pointer-events:none;
     box-shadow:0 12px 40px rgba(0,0,0,0.22); border-radius:10px;
-    background:#fff; transform:scale(1.03);
+    background:#fff; transform:scale(1.02);
   `;
-  document.body.appendChild(clone);
   return clone;
 }
 
-function moveFloating(el, x, y) {
-  el.style.left = x + 'px';
+function moveFloating(el, _, y) {
   el.style.top = y + 'px';
 }
 
@@ -255,7 +252,6 @@ function removeFloating() {
 
 function cleanupDrag() {
   removeFloating();
-  if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
   dragSrcId = null;
   dragSrcEl = null;
   dragLastSwapped = null;
@@ -270,27 +266,23 @@ function performSwap(targetId) {
   if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
   if (!isSameGroup(dragSrcId, targetId)) return;
 
-  // 交换数组
-  [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
-
-  // FLIP 动画
-  const viewSorted = getViewItems();
   const srcViewEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
   const tgtViewEl = todoList.querySelector(`.todo-item[data-id="${targetId}"]`);
-  if (srcViewEl && tgtViewEl && srcViewEl !== tgtViewEl) {
-    animateElementSwap(srcViewEl, tgtViewEl);
-  }
+  if (!srcViewEl || !tgtViewEl || srcViewEl === tgtViewEl) return;
 
-  // 交换 DOM 位置
-  if (srcViewEl && tgtViewEl && srcViewEl !== tgtViewEl) {
-    const next = tgtViewEl.nextSibling;
-    if (next === srcViewEl) {
-      tgtViewEl.parentNode.insertBefore(tgtViewEl, srcViewEl.nextSibling);
-    } else {
-      tgtViewEl.parentNode.insertBefore(srcViewEl, next);
-    }
-    dragSrcEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
-  }
+  // FLIP 动画：目标元素滑入源位置
+  animateElementSwap(srcViewEl, tgtViewEl);
+
+  // 交换 DOM 中两个元素的位置
+  const placeholder = document.createElement('li');
+  placeholder.style.display = 'none';
+  srcViewEl.parentNode.insertBefore(placeholder, srcViewEl);
+  tgtViewEl.parentNode.insertBefore(srcViewEl, tgtViewEl);
+  placeholder.parentNode.insertBefore(tgtViewEl, placeholder);
+  placeholder.remove();
+
+  // 交换数组
+  [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
 
   dragLastSwapped = targetId;
   save();
@@ -305,7 +297,6 @@ function onDragStart(e) {
   dragActive = true;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', dragSrcId);
-  requestAnimationFrame(() => { this.classList.add('drag-hidden'); });
 }
 
 function onDragEnd() {
@@ -371,7 +362,6 @@ function onTouchDnDMove(e) {
     dragSrcEl = this;
     dragLastSwapped = null;
     dragActive = true;
-    this.classList.add('drag-hidden');
 
     const rect = this.getBoundingClientRect();
     dragFloating = createFloating(this, rect.left, e.touches[0].clientY - 30);

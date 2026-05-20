@@ -311,19 +311,8 @@
   transition: transform 0.22s ease;
 }
 
-.todo-item.drag-hidden {
-  visibility: hidden;
-  height: 0;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  border: none;
-  opacity: 0;
-}
-
 .drag-floating {
   transition: none !important;
-  opacity: 0.9;
 }
 
 /* 已完成分组顶部分隔 */
