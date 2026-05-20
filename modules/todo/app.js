@@ -82,8 +82,6 @@ const calNextYear = $el('calNextYear');
 const ddlClear = $el('ddlClear');
 const modalCancel = $el('modalCancel');
 const modalConfirm = $el('modalConfirm');
-const contextMenu = $el('contextMenu');
-const ctxEdit = $el('ctxEdit');
 
 /* ── 工具函数 ──────────────────────────────────────────── */
 
@@ -146,7 +144,7 @@ function render() {
     const text = document.createElement('span');
     text.className = 'todo-text';
     text.textContent = todo.content;
-    text.addEventListener('dblclick', () => startEditInline(todo.id, text));
+    text.addEventListener('click', () => startEditInline(todo.id, text));
 
     if (todo.deadline) {
       const dl = document.createElement('span');
@@ -164,9 +162,6 @@ function render() {
     del.addEventListener('click', () => remove(todo.id));
 
     li.append(cb, body, del);
-
-    // 长按事件
-    addLongPress(li, todo.id);
 
     todoList.appendChild(li);
   });
@@ -232,65 +227,6 @@ function startEditInline(id, span) {
   input.focus();
   input.select();
 }
-
-/* ── 长按上下文菜单 ────────────────────────────────────── */
-
-let longPressTimer = null;
-let longPressId = null;
-
-function addLongPress(el, id) {
-  let started = false;
-
-  function start(e) {
-    started = false;
-    longPressTimer = setTimeout(() => {
-      started = true;
-      longPressId = id;
-      showContextMenu(e);
-    }, 500);
-  }
-
-  function end() {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-
-  el.addEventListener('touchstart', (e) => {
-    start(e.touches[0]);
-  }, { passive: true });
-
-  el.addEventListener('touchend', end);
-  el.addEventListener('touchmove', end);
-  el.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    clearTimeout(longPressTimer);
-    longPressId = id;
-    showContextMenu(e);
-  });
-}
-
-function showContextMenu(e) {
-  const x = e.clientX || (e.touches && e.touches[0].clientX) || 100;
-  const y = e.clientY || (e.touches && e.touches[0].clientY) || 200;
-  contextMenu.style.left = Math.min(x, window.innerWidth - 140) + 'px';
-  contextMenu.style.top = Math.min(y, window.innerHeight - 60) + 'px';
-  contextMenu.hidden = false;
-}
-
-function hideContextMenu() {
-  contextMenu.hidden = true;
-  longPressId = null;
-}
-
-document.addEventListener('click', (e) => {
-  if (contextMenu && !contextMenu.contains(e.target)) hideContextMenu();
-});
-
-if (ctxEdit) ctxEdit.addEventListener('click', () => {
-  const id = longPressId;
-  hideContextMenu();
-  openModalForEdit(id);
-});
 
 /* ── 日历面板 ────────────────────────────────────────── */
 

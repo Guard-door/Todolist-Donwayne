@@ -397,39 +397,6 @@
 
 .empty-state.hidden { display: none; }
 
-/* ── 上下文菜单 ──────────────────────────────────────── */
-
-.context-menu {
-  position: fixed;
-  z-index: 350;
-  min-width: 120px;
-  padding: 4px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-  animation: ctxIn 0.12s ease;
-}
-
-.context-menu[hidden] { display: none; }
-
-@keyframes ctxIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-.context-menu-item {
-  display: block;
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 15px;
-  text-align: left;
-  color: #333;
-  transition: background 0.1s;
-}
-
-.context-menu-item:hover { background: #f0f3f7; }
-
 /* ── 响应式 ──────────────────────────────────────────────── */
 
 @media (max-width: 520px) {
