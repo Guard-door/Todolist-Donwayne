@@ -200,11 +200,13 @@ function enableSortable(listEl, options) {
   function onTouchStart(e) {
     const el = this;
     const id = this.dataset.id;
+    const cx = e.touches[0].clientX;
+    const cy = e.touches[0].clientY;
     refreshItems();
     touchTimer = setTimeout(() => {
       touchTimer = null;
       touchDragging = true;
-      start(id, el, e.touches[0].clientX, e.touches[0].clientY);
+      start(id, el, cx, cy);
     }, opt.touchDelay);
   }
 

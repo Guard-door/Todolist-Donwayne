@@ -479,6 +479,6 @@ function renderMydayList(container) {
 
 /* ── 初始化 ────────────────────────────────────────────── */
 
-render();
 initSortable();
+render();
 window.TodoModule = { getMydayTodos, renderMydayList, refresh: render };
