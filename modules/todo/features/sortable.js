@@ -86,24 +86,26 @@ function enableSortable(listEl, options) {
     lastSwapped = tgtEl.dataset.id;
   }
 
-  function findSwapTarget(clientY, dir) {
+  function findSwapTarget(dir) {
+    if (!floating) return null;
     const items = getItems();
     const srcIdx = indexOf(dragEl);
     if (srcIdx === -1) return null;
+    const floatRect = floating.getBoundingClientRect();
 
-    // 向上：顶部越过上方元素中线
+    // 向上：浮动顶部越过上方元素中线
     if (dir < 0 && srcIdx > 0) {
       const above = items[srcIdx - 1];
       if (!isSameGroup(dragId, above.dataset.id)) return null;
       const r = above.getBoundingClientRect();
-      if (clientY < r.top + r.height / 2) return above;
+      if (floatRect.top < r.top + r.height / 2) return above;
     }
-    // 向下：底部越过下方元素中线
+    // 向下：浮动底部越过下方元素中线
     if (dir > 0 && srcIdx < items.length - 1) {
       const below = items[srcIdx + 1];
       if (!isSameGroup(dragId, below.dataset.id)) return null;
       const r = below.getBoundingClientRect();
-      if (clientY > r.top + r.height / 2) return below;
+      if (floatRect.bottom > r.top + r.height / 2) return below;
     }
     return null;
   }
@@ -143,7 +145,7 @@ function enableSortable(listEl, options) {
     if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
     if (dir) lastDir = dir;
     lastClientY = e.clientY;
-    const target = findSwapTarget(e.clientY, dir);
+    const target = findSwapTarget(dir);
     if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
   }
 
@@ -181,7 +183,7 @@ function enableSortable(listEl, options) {
       if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
       if (dir) lastDir = dir;
       lastClientY = cy;
-      const target = findSwapTarget(cy, dir);
+      const target = findSwapTarget(dir);
       if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
       return;
     }
