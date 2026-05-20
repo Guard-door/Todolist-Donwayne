@@ -37,12 +37,7 @@ navigator.serviceWorker.addEventListener('controllerchange', () => location.relo
 
 ## 提交规范
 
-```
-vX.Y.Z: <简短描述>
-
-## 模块
-- 具体改动
-```
+Commit message 只写 `vX.Y.Z`，具体变更已在 CHANGELOG.md 中记录。
 
 ---
 

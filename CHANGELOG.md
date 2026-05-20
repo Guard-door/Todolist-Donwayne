@@ -1,59 +1,59 @@
 # Changelog
 
-## v1.1.0 (2026-05-21)
+## v1.1.1
+
+### 配置
+- 新增 CLAUDE.md 协作宪法（版本号规范、SW 版本管理、提交规范）
+- service-worker.js 新增 APP_VERSION 常量，CACHE_NAME 纳入版本号
+- shell.js 新增 controllerchange 监听，SW 更新后自动静默刷新
+
+### 文档
+- 新增 README.md 项目说明
+- 新增 IMPLEMENTATION.md 实现文档
+
+## v1.1.0
 
 ### 架构
+- 模块化拆分：modules/todo/ 独立管理 CSS/JS，Shell 层负责顶栏/底栏/Myday
+- window.TodoModule API 暴露给 Shell 调用
 
-- 模块化拆分：`modules/todo/` 独立管理 Todo 模块的 HTML、CSS、JS
-- Shell 层：`index.html` + `css/style.css` + `js/shell.js` 负责顶栏/底栏/Myday 面板/离线横幅/模块加载
-- `window.TodoModule` API 暴露给 Shell 调用
+### 待办
+- 新增 FAB 悬浮添加按钮 + 底部弹出模态面板
+- 新增日历 DDL 选择器（年/月导航，过去日期不可选，今天蓝底）
+- 新增 DDL 行右侧 × 清除按钮
+- 新增长按/右键上下文菜单 → 编辑
+- 活跃任务在上，已完成沉底 + 内凹分隔阴影
+- 任务卡片悬浮阴影，已完成淡灰底色
+- 日期格式改为年/月/日，任务列表小字无图标
+- 自动清理过期已完成任务
 
-### 数据模型
-
-- 字段统一：`content`、`completed`、`deadline`、`id`
-- localStorage key 改为 `todo_data`
-- 自动迁移旧字段（`text→content`、`done→completed`、`dueDate→deadline`）
-- 移除 `createdAt`、`myDay` 字段
-- 自动清理：加载时删除 `completed=true && deadline < 今天` 的过期任务
-
-### 待办模块
-
-- FAB 悬浮添加按钮（右下角圆形 + 号，双层阴影）
-- 底部弹出模态面板：内容输入 + 日历选择 DDL + 添加/取消
-- 日历面板：年/月双导航（« ‹ › »），过去日期灰色不可选，今天蓝底白字
-- DDL 行右侧 × 清除按钮（样式与任务删除按钮一致）
-- 日期格式 `年/月/日`（如 `2026/5/21`），列表中小字灰色显示
-- 长按/右键弹出上下文菜单 → "编辑" → 打开预填模态框
-- 双击任务文字原地编辑
-- 活跃任务始终在上方，已完成自动沉底
-- 已完成区域顶部 4px 内凹分隔阴影
-- 活跃任务白色卡片悬浮阴影，已完成任务淡灰底色
-- 整体底色 `#f5f6f9`
+### 数据
+- 字段统一 content/completed/deadline，localStorage key → todo_data
+- 旧字段自动迁移（text→content, done→completed, dueDate→deadline）
+- 移除 createdAt、myDay 字段
 
 ### Myday
+- 顶栏太阳图标替换星星，左侧滑入面板
+- 自动显示 deadline = 今天的未完成任务，移除手动星标
 
-- 顶栏太阳图标 ☀️ 替代原星星图标
-- 左侧滑入面板，自动显示 `deadline = 今天` 的未完成任务
-- 空状态："No, have a relax~"
-- 关闭自动清理时重新渲染
+### UI
+- 顶部固定导航栏（太阳 + WiFi + TODO 标题）
+- WiFi 单一 SVG 动态切换（在线绿色/离线红色斜杠）
+- 底部固定栏仅保留对勾图标
+- 离线横幅 240px 居中、圆角
 
-### 顶栏/底栏/离线横幅
+### 移除
+- 搜索框、过滤按钮（All/Active/Done）、统计栏、"清空已完成"按钮
+- 手动星标 MyDay、任务列表 📅 图标
 
-- 顶部固定导航栏：太阳图标 + WiFi 状态 + TODO 标题
-- WiFi 图标单一 SVG 动态切换（在线绿色/离线红色斜杠）
-- 底部固定导航栏：对勾图标居中（无文字）
-- 离线横幅：240px 居中、圆角、向下滑入
+## v1.0.0
 
-### 移除项
-
-- 搜索框及实时过滤
-- All / Active / Done 过滤按钮
-- "清空已完成"按钮及统计栏
-- 手动星标 MyDay 功能（改为自动判定）
-- 任务列表中的 📅 emoji 图标
+### 基础
+- 纯 HTML/CSS/JS 待办应用，语义化标签
+- 添加/完成/删除任务，原地编辑（双击）
+- localStorage 持久化，搜索框、过滤器、星标
 
 ### PWA
-
-- manifest.json + icon.svg
-- service-worker.js（v2 缓存列表，仅 http/https 注册）
-- 在线/离线状态监听
+- manifest.json（standalone、主题色）
+- service-worker.js（cache-first 策略）
+- icon.svg + 在线/离线横幅
