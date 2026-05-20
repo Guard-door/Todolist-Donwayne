@@ -37,11 +37,9 @@ const isFirstVisit = todos === null;
 if (isFirstVisit) {
   todos = [];
 } else {
-  // 迁移旧数据
   if (todos.length > 0 && (todos[0].text !== undefined || todos[0].done !== undefined || todos[0].dueDate !== undefined)) {
     save();
   }
-  // 自动清理：删除 completed && deadline < today
   const before = todos.length;
   todos = todos.filter(t => {
     if (!t.completed) return true;
@@ -54,7 +52,7 @@ if (isFirstVisit) {
 /* ── 状态 ──────────────────────────────────────────────── */
 
 let selectedDeadline = null;
-let editingId = null; // 编辑模式下的任务 id
+let editingId = null;
 
 /* ── DOM 引用 ──────────────────────────────────────────── */
 
@@ -116,7 +114,6 @@ function render() {
     emptyState.classList.add('hidden');
   }
 
-  // 排序：未完成在上，已完成在下
   const sorted = [...todos].sort((a, b) => a.completed - b.completed);
   let sepInserted = false;
 
@@ -172,214 +169,10 @@ function render() {
 
     li.append(cb, body, del);
 
-    // 长按事件
     addLongPress(li, todo.id);
 
     todoList.appendChild(li);
   });
-}
-
-/* ── 拖拽排序（Edge 风格：单元素交换 + 中线判定） ───────── */
-
-let dragSrcId = null;
-let dragSrcEl = null;
-let dragLastSwapped = null;
-let dragFloating = null;
-let dragActive = false;
-let touchStartY = 0;
-let touchStartTime = 0;
-let touchDragging = false;
-
-function getViewItems() {
-  return [...todos].sort((a, b) => a.completed - b.completed);
-}
-
-function isSameGroup(id1, id2) {
-  const t1 = todos[findIndex(+id1)];
-  const t2 = todos[findIndex(+id2)];
-  if (!t1 || !t2) return false;
-  return t1.completed === t2.completed;
-}
-
-/* 中线判定：被拖元素顶部/底部是否越过目标中线 */
-function crossedMidline(dragY, targetEl) {
-  const r = targetEl.getBoundingClientRect();
-  const mid = r.top + r.height / 2;
-  return { crossed: true, above: dragY < mid };
-}
-
-/* FLIP 动画交换两个可见元素 */
-function animateElementSwap(elA, elB) {
-  const rA = elA.getBoundingClientRect();
-  const rB = elB.getBoundingClientRect();
-  const dxA = rB.left - rA.left;
-  const dyA = rB.top - rA.top;
-  const dxB = rA.left - rB.left;
-  const dyB = rA.top - rB.top;
-
-  elA.style.transition = 'none';
-  elB.style.transition = 'none';
-  elA.style.transform = `translate(${dxA}px,${dyA}px)`;
-  elB.style.transform = `translate(${dxB}px,${dyB}px)`;
-
-  requestAnimationFrame(() => {
-    elA.style.transition = 'transform 0.22s ease';
-    elB.style.transition = 'transform 0.22s ease';
-    elA.style.transform = '';
-    elB.style.transform = '';
-  });
-}
-
-function createFloating(srcEl, x, y) {
-  const clone = srcEl.cloneNode(true);
-  clone.className = 'todo-item drag-floating';
-  clone.style.cssText = `
-    position:fixed; left:${x}px; top:${y}px;
-    width:${srcEl.offsetWidth}px; z-index:500; pointer-events:none;
-    box-shadow:0 12px 40px rgba(0,0,0,0.22); border-radius:10px;
-    background:#fff; transform:scale(1.02);
-  `;
-  return clone;
-}
-
-function moveFloating(el, _, y) {
-  el.style.top = y + 'px';
-}
-
-function removeFloating() {
-  if (dragFloating && dragFloating.parentNode) {
-    dragFloating.parentNode.removeChild(dragFloating);
-  }
-  dragFloating = null;
-}
-
-function cleanupDrag() {
-  removeFloating();
-  dragSrcId = null;
-  dragSrcEl = null;
-  dragLastSwapped = null;
-  dragActive = false;
-  touchDragging = false;
-}
-
-/* 执行一次交换 */
-function performSwap(targetId) {
-  const srcIdx = findIndex(+dragSrcId);
-  const tgtIdx = findIndex(+targetId);
-  if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
-  if (!isSameGroup(dragSrcId, targetId)) return;
-
-  const srcViewEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
-  const tgtViewEl = todoList.querySelector(`.todo-item[data-id="${targetId}"]`);
-  if (!srcViewEl || !tgtViewEl || srcViewEl === tgtViewEl) return;
-
-  // FLIP 动画：目标元素滑入源位置
-  animateElementSwap(srcViewEl, tgtViewEl);
-
-  // 交换 DOM 中两个元素的位置
-  const parent = srcViewEl.parentNode;
-  const nextA = srcViewEl.nextSibling;
-  const nextB = tgtViewEl.nextSibling;
-  if (nextA === tgtViewEl) {
-    parent.insertBefore(tgtViewEl, srcViewEl);
-  } else if (nextB === srcViewEl) {
-    parent.insertBefore(srcViewEl, tgtViewEl);
-  } else {
-    parent.insertBefore(srcViewEl, nextB);
-    parent.insertBefore(tgtViewEl, nextA);
-  }
-
-  // 交换数组
-  [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
-
-  dragLastSwapped = targetId;
-  save();
-}
-
-/* ── 桌面端 ──────────────────────────────────────────── */
-
-function onDragStart(e) {
-  dragSrcId = this.dataset.id;
-  dragSrcEl = this;
-  dragLastSwapped = null;
-  dragActive = true;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', dragSrcId);
-}
-
-function onDragEnd() {
-  cleanupDrag();
-  save();
-  render();
-}
-
-function onDragOver(e) {
-  e.preventDefault();
-  if (!dragActive || !dragSrcId) return;
-  e.dataTransfer.dropEffect = 'move';
-  const targetId = this.dataset.id;
-  if (targetId === dragSrcId || targetId === dragLastSwapped) return;
-  if (!isSameGroup(dragSrcId, targetId)) return;
-
-  const { crossed } = crossedMidline(e.clientY, this);
-  if (crossed) performSwap(targetId);
-}
-
-function onDrop(e) {
-  e.preventDefault();
-  cleanupDrag();
-  save();
-  render();
-}
-
-/* ── 移动端触摸拖拽 ──────────────────────────────────── */
-
-function onTouchDnDStart(e) {
-  touchStartY = e.touches[0].clientY;
-  touchStartTime = Date.now();
-}
-
-function onTouchDnDMove(e) {
-  if (touchDragging) {
-    e.preventDefault();
-    const cx = dragFloating.getBoundingClientRect().left;
-    moveFloating(dragFloating, cx, e.touches[0].clientY - 30);
-
-    const target = document.elementFromPoint(
-      dragFloating.getBoundingClientRect().left + dragFloating.offsetWidth / 2,
-      e.touches[0].clientY
-    )?.closest('.todo-item');
-    if (target && target.dataset.id && target.dataset.id !== dragSrcId && target.dataset.id !== dragLastSwapped) {
-      if (isSameGroup(dragSrcId, target.dataset.id)) {
-        const { crossed } = crossedMidline(e.touches[0].clientY, target);
-        if (crossed) performSwap(target.dataset.id);
-      }
-    }
-    return;
-  }
-
-  if (Date.now() - touchStartTime > 300) {
-    touchDragging = true;
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-    e.preventDefault();
-
-    dragSrcId = this.dataset.id;
-    dragSrcEl = this;
-    dragLastSwapped = null;
-    dragActive = true;
-
-    const rect = this.getBoundingClientRect();
-    dragFloating = createFloating(this, rect.left, e.touches[0].clientY - 30);
-  }
-}
-
-function onTouchDnDEnd() {
-  if (touchDragging) {
-    cleanupDrag();
-    save();
-    render();
-  }
 }
 
 /* ── CRUD ──────────────────────────────────────────────── */
@@ -449,40 +242,32 @@ let longPressTimer = null;
 let longPressId = null;
 
 function addLongPress(el, id) {
-  let started = false;
-
-  function start(e) {
-    started = false;
+  el.addEventListener('touchstart', (e) => {
     longPressTimer = setTimeout(() => {
       if (touchDragging) return;
-      started = true;
       longPressId = id;
-      showContextMenu(e);
+      showContextMenu(e.touches[0]);
     }, 500);
-  }
-
-  function end() {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-
-  el.addEventListener('touchstart', (e) => {
-    start(e.touches[0]);
   }, { passive: true });
 
-  el.addEventListener('touchend', end);
-  el.addEventListener('touchmove', end);
+  el.addEventListener('touchend', () => {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  });
+  el.addEventListener('touchmove', () => {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  });
   el.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    clearTimeout(longPressTimer);
     longPressId = id;
     showContextMenu(e);
   });
 }
 
 function showContextMenu(e) {
-  const x = e.clientX || (e.touches && e.touches[0].clientX) || 100;
-  const y = e.clientY || (e.touches && e.touches[0].clientY) || 200;
+  const x = e.clientX || 100;
+  const y = e.clientY || 200;
   contextMenu.style.left = Math.min(x, window.innerWidth - 140) + 'px';
   contextMenu.style.top = Math.min(y, window.innerHeight - 60) + 'px';
   contextMenu.hidden = false;
@@ -503,13 +288,163 @@ if (ctxEdit) ctxEdit.addEventListener('click', () => {
   openModalForEdit(id);
 });
 
+/* ── 拖拽排序（Edge 风格：单元素交换 + 中线判定） ───────── */
+
+let dragSrcId = null;
+let dragLastSwapped = null;
+let dragFloating = null;
+let dragActive = false;
+let touchDragTimer = null;
+let touchDragging = false;
+
+function isSameGroup(id1, id2) {
+  const t1 = todos[findIndex(+id1)];
+  const t2 = todos[findIndex(+id2)];
+  if (!t1 || !t2) return false;
+  return t1.completed === t2.completed;
+}
+
+function animateElementSwap(elA, elB) {
+  const rA = elA.getBoundingClientRect();
+  const rB = elB.getBoundingClientRect();
+  elA.style.transition = 'none';
+  elB.style.transition = 'none';
+  elA.style.transform = `translate(${rB.left - rA.left}px,${rB.top - rA.top}px)`;
+  elB.style.transform = `translate(${rA.left - rB.left}px,${rA.top - rB.top}px)`;
+  requestAnimationFrame(() => {
+    elA.style.transition = 'transform 0.3s ease';
+    elB.style.transition = 'transform 0.3s ease';
+    elA.style.transform = '';
+    elB.style.transform = '';
+  });
+}
+
+function createFloating(el, x, y) {
+  const clone = el.cloneNode(true);
+  clone.className = 'todo-item drag-floating';
+  clone.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    width:${el.offsetWidth}px; z-index:500; pointer-events:none;
+    box-shadow:0 12px 40px rgba(0,0,0,0.22); border-radius:10px;
+    background:#fff; transform:scale(1.02);
+  `;
+  document.body.appendChild(clone);
+  return clone;
+}
+
+function removeFloating() {
+  if (dragFloating?.parentNode) dragFloating.parentNode.removeChild(dragFloating);
+  dragFloating = null;
+}
+
+function cleanupDrag() {
+  removeFloating();
+  dragSrcId = null;
+  dragLastSwapped = null;
+  dragActive = false;
+  touchDragging = false;
+  if (touchDragTimer) { clearTimeout(touchDragTimer); touchDragTimer = null; }
+}
+
+function performSwap(targetId) {
+  const srcIdx = findIndex(+dragSrcId);
+  const tgtIdx = findIndex(+targetId);
+  if (srcIdx === tgtIdx) return;
+  if (!isSameGroup(dragSrcId, targetId)) return;
+
+  const srcEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
+  const tgtEl = todoList.querySelector(`.todo-item[data-id="${targetId}"]`);
+  if (!srcEl || !tgtEl) return;
+
+  animateElementSwap(srcEl, tgtEl);
+
+  const p = srcEl.parentNode;
+  const na = srcEl.nextSibling;
+  const nb = tgtEl.nextSibling;
+  if (na === tgtEl) { p.insertBefore(tgtEl, srcEl); }
+  else if (nb === srcEl) { p.insertBefore(srcEl, tgtEl); }
+  else { p.insertBefore(srcEl, nb); p.insertBefore(tgtEl, na); }
+
+  [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
+  dragLastSwapped = targetId;
+  save();
+}
+
+/* 桌面端 */
+
+function onDragStart(e) {
+  dragSrcId = this.dataset.id;
+  dragLastSwapped = null;
+  dragActive = true;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragSrcId);
+}
+
+function onDragEnd() { cleanupDrag(); save(); render(); }
+
+function onDragOver(e) {
+  e.preventDefault();
+  if (!dragActive || !dragSrcId) return;
+  e.dataTransfer.dropEffect = 'move';
+  const tid = this.dataset.id;
+  if (tid === dragSrcId || tid === dragLastSwapped) return;
+  if (!isSameGroup(dragSrcId, tid)) return;
+  const r = this.getBoundingClientRect();
+  if (Math.abs(e.clientY - (r.top + r.height / 2)) < r.height) performSwap(tid);
+}
+
+function onDrop(e) { e.preventDefault(); cleanupDrag(); save(); render(); }
+
+/* 移动端 */
+
+function onTouchDnDStart(e) {
+  const el = this;
+  const id = this.dataset.id;
+  touchDragTimer = setTimeout(() => {
+    touchDragTimer = null;
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+    startTouchDrag(id, el, e.touches[0].clientX, e.touches[0].clientY);
+  }, 300);
+}
+
+function startTouchDrag(id, el, cx, cy) {
+  dragSrcId = id;
+  dragLastSwapped = null;
+  dragActive = true;
+  touchDragging = true;
+  const rect = el.getBoundingClientRect();
+  dragFloating = createFloating(el, rect.left, cy - 30);
+}
+
+function onTouchDnDMove(e) {
+  if (touchDragging) {
+    e.preventDefault();
+    if (dragFloating) dragFloating.style.top = (e.touches[0].clientY - 30) + 'px';
+    const fx = dragFloating?.getBoundingClientRect().left + (dragFloating?.offsetWidth || 0) / 2;
+    const target = document.elementFromPoint(fx || e.touches[0].clientX, e.touches[0].clientY)
+      ?.closest('.todo-item');
+    if (target?.dataset?.id && target.dataset.id !== dragSrcId && target.dataset.id !== dragLastSwapped) {
+      if (isSameGroup(dragSrcId, target.dataset.id)) {
+        const r = target.getBoundingClientRect();
+        if (Math.abs(e.touches[0].clientY - (r.top + r.height / 2)) < r.height) performSwap(target.dataset.id);
+      }
+    }
+    return;
+  }
+  if (touchDragTimer) { clearTimeout(touchDragTimer); touchDragTimer = null; }
+}
+
+function onTouchDnDEnd() {
+  if (touchDragTimer) { clearTimeout(touchDragTimer); touchDragTimer = null; }
+  if (touchDragging) { cleanupDrag(); save(); render(); }
+}
+
 /* ── 日历面板 ────────────────────────────────────────── */
 
 let calYear, calMonth;
 
-function todayStr() {
-  return loadDateStr;
-}
+function todayStr() { return loadDateStr; }
 
 function isPast(y, m, d) {
   return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` < loadDateStr;
@@ -522,22 +457,17 @@ function buildCalendar() {
   const firstDay = new Date(calYear, calMonth - 1, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth, 0).getDate();
 
-  for (let i = 0; i < firstDay; i++) {
-    calDays.appendChild(document.createElement('div'));
-  }
+  for (let i = 0; i < firstDay; i++) calDays.appendChild(document.createElement('div'));
 
   for (let d = 1; d <= daysInMonth; d++) {
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.className = 'cal-day';
     cell.textContent = d;
-
     const ds = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-
     if (isPast(calYear, calMonth, d)) cell.classList.add('past');
     if (ds === todayStr()) cell.classList.add('today');
     if (ds === selectedDeadline) cell.classList.add('selected');
-
     if (!isPast(calYear, calMonth, d)) {
       cell.addEventListener('click', () => {
         selectedDeadline = ds;
@@ -547,23 +477,18 @@ function buildCalendar() {
         ddlCalendar.hidden = true;
       });
     }
-
     calDays.appendChild(cell);
   }
 }
 
 calPrev.addEventListener('click', () => {
-  if (calMonth === 1) { calMonth = 12; calYear--; }
-  else { calMonth--; }
+  if (calMonth === 1) { calMonth = 12; calYear--; } else calMonth--;
   buildCalendar();
 });
-
 calNext.addEventListener('click', () => {
-  if (calMonth === 12) { calMonth = 1; calYear++; }
-  else { calMonth++; }
+  if (calMonth === 12) { calMonth = 1; calYear++; } else calMonth++;
   buildCalendar();
 });
-
 calPrevYear.addEventListener('click', () => { calYear--; buildCalendar(); });
 calNextYear.addEventListener('click', () => { calYear++; buildCalendar(); });
 
@@ -580,8 +505,7 @@ ddlToggle.addEventListener('click', () => {
   if (ddlCalendar.hidden) {
     if (selectedDeadline) {
       const [y, m] = selectedDeadline.split('-');
-      calYear = +y;
-      calMonth = +m;
+      calYear = +y; calMonth = +m;
     } else {
       const now = new Date();
       calYear = now.getFullYear();
@@ -637,11 +561,8 @@ function closeModal() { modalOverlay.hidden = true; }
 function submitModal() {
   const content = modalContent.value.trim();
   if (!content) return;
-  if (editingId) {
-    update(editingId, content, selectedDeadline);
-  } else {
-    add(content, selectedDeadline);
-  }
+  if (editingId) update(editingId, content, selectedDeadline);
+  else add(content, selectedDeadline);
   closeModal();
 }
 
@@ -655,7 +576,7 @@ modalContent.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); submitModal(); }
 });
 
-/* ── Myday API（供 Shell 调用）─────────────────────────── */
+/* ── Myday API ────────────────────────────────────────── */
 
 function getMydayTodos() {
   return todos.filter(t => !t.completed && isToday(t.deadline));
@@ -669,17 +590,14 @@ function renderMydayList(container) {
   list.forEach(todo => {
     const li = document.createElement('li');
     li.className = 'myday-item' + (todo.completed ? ' completed' : '');
-
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.style.cssText = 'width:18px;height:18px;accent-color:#4a90d9;cursor:pointer;flex-shrink:0';
     cb.checked = todo.completed;
     cb.addEventListener('change', () => { toggle(todo.id); renderMydayList(container); });
-
     const span = document.createElement('span');
     span.className = 'myday-item-text';
     span.textContent = todo.content;
-
     li.append(cb, span);
     container.appendChild(li);
   });
@@ -689,5 +607,4 @@ function renderMydayList(container) {
 /* ── 初始化 ────────────────────────────────────────────── */
 
 render();
-
 window.TodoModule = { getMydayTodos, renderMydayList, refresh: render };

@@ -292,6 +292,7 @@
 }
 
 .todo-item {
+  touch-action: none;
   display: flex;
   align-items: center;
   gap: 12px;
