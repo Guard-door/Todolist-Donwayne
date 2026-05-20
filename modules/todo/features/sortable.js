@@ -38,11 +38,12 @@ function enableSortable(listEl, options) {
   function createFloating(el, x, y) {
     const clone = el.cloneNode(true);
     clone.classList.add('drag-floating');
+    const bg = getComputedStyle(el).backgroundColor;
     clone.style.cssText = [
       'position:fixed', `left:${x}px`, `top:${y}px`,
       `width:${el.offsetWidth}px`, 'z-index:500', 'pointer-events:none',
       'box-shadow:0 12px 40px rgba(0,0,0,0.22)', 'border-radius:10px',
-      'transform:scale(1.02)'
+      'transform:scale(1.02)', `background-color:${bg}`
     ].join(';');
     document.body.appendChild(clone);
     return clone;
@@ -132,7 +133,6 @@ function enableSortable(listEl, options) {
 
   function cleanup() {
     removeFloating();
-    if (dragEl) dragEl.style.opacity = '';
     dragId = null; dragEl = null; lastSwapped = null; active = false;
   }
 
@@ -148,7 +148,6 @@ function enableSortable(listEl, options) {
     active = true;
     lastClientY = e.clientY;
     lastDir = 0;
-    this.style.opacity = '0'; // 空白位
     floating = createFloating(this, this.getBoundingClientRect().left, e.clientY - 30);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dragId);
@@ -170,7 +169,6 @@ function enableSortable(listEl, options) {
   function onDrop() {
     if (!active) return;
     removeFloating();
-    if (dragEl) dragEl.style.opacity = '';
     dragId = null; dragEl = null; lastSwapped = null; active = false;
     const newOrder = getItems().map(el => el.dataset.id);
     if (opt.onSortEnd) opt.onSortEnd(newOrder);
@@ -182,7 +180,7 @@ function enableSortable(listEl, options) {
     // 清理可能残留的状态
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (floating) { removeFloating(); }
-    if (dragEl) { dragEl.style.opacity = ''; dragEl = null; }
+    if (dragEl) { dragEl = null; }
     active = false; touchDragging = false;
 
     const el = this;
@@ -193,7 +191,6 @@ function enableSortable(listEl, options) {
       touchTimer = null;
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
-      el.style.opacity = '0';
       floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
       lastClientY = cy;
       lastDir = 0;
