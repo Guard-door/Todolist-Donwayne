@@ -2,7 +2,7 @@
    Shell — 模块加载、WiFi、离线横幅、Myday 侧边面板、PWA
    ================================================================ */
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.3';
 
 /* ── 加载 Todo 模块 ───────────────────────────────────── */
 
@@ -114,7 +114,7 @@ mydayOverlay.addEventListener('click', closeMyday);
 const settingsToggle = document.getElementById('settingsToggle');
 const settingsOverlay = document.getElementById('settingsOverlay');
 const settingsPanel = document.getElementById('settingsPanel');
-document.getElementById('settingsVersion').textContent = APP_VERSION;
+document.getElementById('settingsVersion').textContent = 'v' + APP_VERSION;
 
 function openSettings() {
   settingsOverlay.hidden = false;

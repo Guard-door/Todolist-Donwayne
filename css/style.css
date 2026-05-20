@@ -237,14 +237,13 @@ ul, ol { list-style: none; }
 .settings-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   padding: 16px 20px;
-  border-top: 1px solid #eef0f2;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-#settingsVersion { color: #999; }
-.settings-signature { color: #bbb; }
+#settingsVersion { color: #bbb; }
+.settings-signature { color: #ccc; }
 
 /* ── 离线横幅 ────────────────────────────────────────────── */
 
