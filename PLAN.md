@@ -52,4 +52,22 @@
 | D | **通知提醒** | 待办增强 | Notification API，截止任务到期推送 |
 | E | **深色模式** | 全局 UI | 跟随系统 / 手动切换 |
 | F | **数据导出/导入** | 数据 | JSON 导出备份，导入恢复 |
-| G | **拖拽排序** | 待办增强 | 拖动任务项调整顺序 |
+| G | ~~**拖拽排序**~~ | 待办增强 | → 正在实现 |
+
+---
+
+## 正在实现：拖拽排序
+
+### 交互模式：Edge 交换
+
+- 被拖元素透明化留白，浮动克隆跟随指针
+- 被拖元素中心越过目标中线 → 目标滑入填补 gap
+- 连续拖动可多次交换，松手后 save + render
+
+### 技术方案
+
+- 独立模块 `modules/todo/features/sortable.js`
+- 接口：`enableSortable(listEl, { onSortEnd, isSameGroup })`
+- 桌面端 HTML5 DnD，移动端 Touch 300ms 长按
+- 动画：拖拽中 FLIP 单元素移动，松手统一 render
+- 所有 DOM 操作空值防护
