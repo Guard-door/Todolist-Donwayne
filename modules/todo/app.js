@@ -132,6 +132,7 @@ function render() {
     const li = document.createElement('li');
     li.className = 'todo-item' + (todo.completed ? ' completed' : '');
     li.dataset.id = todo.id;
+    if (sortableData) bindSortableItem(li, sortableData);
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -474,8 +475,36 @@ function renderMydayList(container) {
   return true;
 }
 
+/* ── 拖拽排序 ────────────────────────────────────────── */
+
+let sortableData = null;
+
+function initSortable() {
+  if (!todoList) return;
+  enableSortable(todoList, {
+    onSortEnd(newOrder) {
+      const map = new Map(todos.map(t => [String(t.id), t]));
+      todos = [];
+      for (const id of newOrder) {
+        const t = map.get(id);
+        if (t) { todos.push(t); map.delete(id); }
+      }
+      save();
+      render();
+    },
+    isSameGroup(id1, id2) {
+      const t1 = todos[findIndex(+id1)];
+      const t2 = todos[findIndex(+id2)];
+      if (!t1 || !t2) return false;
+      return t1.completed === t2.completed;
+    },
+  });
+  sortableData = todoList._sortableData;
+}
+
 /* ── 初始化 ────────────────────────────────────────────── */
 
+initSortable();
 render();
 
 window.TodoModule = { getMydayTodos, renderMydayList, refresh: render };

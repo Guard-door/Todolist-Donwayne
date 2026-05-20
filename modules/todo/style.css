@@ -382,6 +382,10 @@
 .todo-item:hover .todo-delete { visibility: visible; }
 .todo-delete:hover { background: #ffeaea; }
 
+/* ── 拖拽排序 ────────────────────────────────────────── */
+
+.drag-floating { transition: none !important; }
+
 /* ── 空状态 ──────────────────────────────────────────────── */
 
 .empty-state {

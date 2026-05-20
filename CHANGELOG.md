@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0
+
+### 待办
+- 新增拖拽排序功能（Edge 交换模式，中线判定 + FLIP 动画）
+- 独立模块 modules/todo/features/sortable.js，数据流单向
+
 ## v1.4.5
 
 ### 设置
