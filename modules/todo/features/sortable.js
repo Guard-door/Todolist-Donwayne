@@ -151,8 +151,10 @@ function enableSortable(listEl, options) {
 
   function onDrop() {
     if (!active) return;
+    removeFloating();
+    if (dragEl) dragEl.style.opacity = '';
+    dragId = null; dragEl = null; lastSwapped = null; active = false;
     const newOrder = getItems().map(el => el.dataset.id);
-    cleanup();
     if (opt.onSortEnd) opt.onSortEnd(newOrder);
   }
 
@@ -197,11 +199,13 @@ function enableSortable(listEl, options) {
   }
 
   function onTouchEnd() {
-    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; return; }
     if (touchDragging) {
-      const newOrder = getItems().map(el => el.dataset.id);
-      cleanup();
       touchDragging = false;
+      removeFloating();
+      if (dragEl) dragEl.style.opacity = '';
+      dragId = null; dragEl = null; lastSwapped = null; active = false;
+      const newOrder = getItems().map(el => el.dataset.id);
       if (opt.onSortEnd) opt.onSortEnd(newOrder);
     }
   }
