@@ -129,14 +129,7 @@ function render() {
     const li = document.createElement('li');
     li.className = 'todo-item' + (todo.completed ? ' completed' : '');
     li.dataset.id = todo.id;
-    li.draggable = true;
-    li.addEventListener('dragstart', onDragStart);
-    li.addEventListener('dragend', onDragEnd);
-    li.addEventListener('dragover', onDragOver);
-    li.addEventListener('drop', onDrop);
-    li.addEventListener('touchstart', onTouchDnDStart, { passive: false });
-    li.addEventListener('touchmove', onTouchDnDMove, { passive: false });
-    li.addEventListener('touchend', onTouchDnDEnd);
+    if (sortableData) bindSortableItem(li, sortableData);
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -288,156 +281,36 @@ if (ctxEdit) ctxEdit.addEventListener('click', () => {
   openModalForEdit(id);
 });
 
-/* ── 拖拽排序（Edge 风格：单元素交换 + 中线判定） ───────── */
+/* ── 拖拽排序（可拔插模块） ────────────────────────────── */
 
-let dragSrcId = null;
-let dragLastSwapped = null;
-let dragFloating = null;
-let dragActive = false;
-let touchDragTimer = null;
-let touchDragging = false;
+let sortableData = null;
 
-function isSameGroup(id1, id2) {
-  const t1 = todos[findIndex(+id1)];
-  const t2 = todos[findIndex(+id2)];
-  if (!t1 || !t2) return false;
-  return t1.completed === t2.completed;
-}
-
-function animateElementSwap(elA, elB) {
-  const rA = elA.getBoundingClientRect();
-  const rB = elB.getBoundingClientRect();
-  elA.style.transition = 'none';
-  elB.style.transition = 'none';
-  elA.style.transform = `translate(${rB.left - rA.left}px,${rB.top - rA.top}px)`;
-  elB.style.transform = `translate(${rA.left - rB.left}px,${rA.top - rB.top}px)`;
-  requestAnimationFrame(() => {
-    elA.style.transition = 'transform 0.3s ease';
-    elB.style.transition = 'transform 0.3s ease';
-    elA.style.transform = '';
-    elB.style.transform = '';
-  });
-}
-
-function createFloating(el, x, y) {
-  const clone = el.cloneNode(true);
-  clone.className = 'todo-item drag-floating';
-  clone.style.cssText = `
-    position:fixed; left:${x}px; top:${y}px;
-    width:${el.offsetWidth}px; z-index:500; pointer-events:none;
-    box-shadow:0 12px 40px rgba(0,0,0,0.22); border-radius:10px;
-    background:#fff; transform:scale(1.02);
-  `;
-  document.body.appendChild(clone);
-  return clone;
-}
-
-function removeFloating() {
-  if (dragFloating?.parentNode) dragFloating.parentNode.removeChild(dragFloating);
-  dragFloating = null;
-}
-
-function cleanupDrag() {
-  removeFloating();
-  dragSrcId = null;
-  dragLastSwapped = null;
-  dragActive = false;
-  touchDragging = false;
-  if (touchDragTimer) { clearTimeout(touchDragTimer); touchDragTimer = null; }
-}
-
-function performSwap(targetId) {
-  const srcIdx = findIndex(+dragSrcId);
-  const tgtIdx = findIndex(+targetId);
-  if (srcIdx === tgtIdx) return;
-  if (!isSameGroup(dragSrcId, targetId)) return;
-
-  const srcEl = todoList.querySelector(`.todo-item[data-id="${dragSrcId}"]`);
-  const tgtEl = todoList.querySelector(`.todo-item[data-id="${targetId}"]`);
-  if (!srcEl || !tgtEl) return;
-
-  animateElementSwap(srcEl, tgtEl);
-
-  const p = srcEl.parentNode;
-  const na = srcEl.nextSibling;
-  const nb = tgtEl.nextSibling;
-  if (na === tgtEl) { p.insertBefore(tgtEl, srcEl); }
-  else if (nb === srcEl) { p.insertBefore(srcEl, tgtEl); }
-  else { p.insertBefore(srcEl, nb); p.insertBefore(tgtEl, na); }
-
-  [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
-  dragLastSwapped = targetId;
-  save();
-}
-
-/* 桌面端 */
-
-function onDragStart(e) {
-  dragSrcId = this.dataset.id;
-  dragLastSwapped = null;
-  dragActive = true;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', dragSrcId);
-}
-
-function onDragEnd() { cleanupDrag(); save(); render(); }
-
-function onDragOver(e) {
-  e.preventDefault();
-  if (!dragActive || !dragSrcId) return;
-  e.dataTransfer.dropEffect = 'move';
-  const tid = this.dataset.id;
-  if (tid === dragSrcId || tid === dragLastSwapped) return;
-  if (!isSameGroup(dragSrcId, tid)) return;
-  const r = this.getBoundingClientRect();
-  if (Math.abs(e.clientY - (r.top + r.height / 2)) < r.height) performSwap(tid);
-}
-
-function onDrop(e) { e.preventDefault(); cleanupDrag(); save(); render(); }
-
-/* 移动端 */
-
-function onTouchDnDStart(e) {
-  const el = this;
-  const id = this.dataset.id;
-  touchDragTimer = setTimeout(() => {
-    touchDragTimer = null;
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-    startTouchDrag(id, el, e.touches[0].clientX, e.touches[0].clientY);
-  }, 300);
-}
-
-function startTouchDrag(id, el, cx, cy) {
-  dragSrcId = id;
-  dragLastSwapped = null;
-  dragActive = true;
-  touchDragging = true;
-  const rect = el.getBoundingClientRect();
-  dragFloating = createFloating(el, rect.left, cy - 30);
-}
-
-function onTouchDnDMove(e) {
-  if (touchDragging) {
-    e.preventDefault();
-    if (dragFloating) dragFloating.style.top = (e.touches[0].clientY - 30) + 'px';
-    const fx = dragFloating?.getBoundingClientRect().left + (dragFloating?.offsetWidth || 0) / 2;
-    const target = document.elementFromPoint(fx || e.touches[0].clientX, e.touches[0].clientY)
-      ?.closest('.todo-item');
-    if (target?.dataset?.id && target.dataset.id !== dragSrcId && target.dataset.id !== dragLastSwapped) {
-      if (isSameGroup(dragSrcId, target.dataset.id)) {
-        const r = target.getBoundingClientRect();
-        if (Math.abs(e.touches[0].clientY - (r.top + r.height / 2)) < r.height) performSwap(target.dataset.id);
-      }
-    }
-    return;
+function initSortable() {
+  if (!todoList) return;
+  sortableData = todoList._sortableData;
+  if (!sortableData) {
+    enableSortable(todoList, {
+      onSortEnd(newOrder) {
+        const map = new Map(todos.map(t => [String(t.id), t]));
+        const reordered = [];
+        for (const id of newOrder) {
+          const t = map.get(id);
+          if (t) { reordered.push(t); map.delete(id); }
+        }
+        todos = reordered;
+        save();
+        render();
+      },
+      isSameGroup(id1, id2) {
+        const t1 = todos[findIndex(+id1)];
+        const t2 = todos[findIndex(+id2)];
+        if (!t1 || !t2) return false;
+        return t1.completed === t2.completed;
+      },
+      touchDelay: 300,
+    });
+    sortableData = todoList._sortableData;
   }
-  if (touchDragTimer) { clearTimeout(touchDragTimer); touchDragTimer = null; }
-}
-
-function onTouchDnDEnd() {
-  if (touchDragTimer) { clearTimeout(touchDragTimer); touchDragTimer = null; }
-  if (touchDragging) { cleanupDrag(); save(); render(); }
 }
 
 /* ── 日历面板 ────────────────────────────────────────── */
@@ -607,4 +480,5 @@ function renderMydayList(container) {
 /* ── 初始化 ────────────────────────────────────────────── */
 
 render();
+initSortable();
 window.TodoModule = { getMydayTodos, renderMydayList, refresh: render };

@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.6.0
+
+### 架构
+- 拖拽排序抽取为独立可拔插模块 modules/todo/features/sortable.js
+- app.js 一行 initSortable() 启用，onSortEnd 回调解耦
+
+### 拖拽
+- 缝隙判定（最近间隙即为插入位），占位符 + FLIP 让位动画
+- 移动端 touchstart 300ms 长按触发
+
+## v1.5.7
+
+### 待办
+- 修复 touchMoved 变量引用错误 + DOM 交换 NotFoundError
+
+## v1.5.6
+
+### 待办
+- 修复 removeFloating parentNode 空值崩溃
+
 ## v1.5.5
 
 ### 待办
