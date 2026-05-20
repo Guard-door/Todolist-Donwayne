@@ -1,51 +1,50 @@
 # Todo PWA 开发计划
 
-使用纯 HTML/CSS/JavaScript 构建待办事项应用，已逐步升级为 PWA。
+纯 HTML/CSS/JavaScript 构建，已升级为可离线使用的 PWA。
 
 ---
 
-## 第一阶段：基础 Todo 应用 ✅
+## 已完成
 
-- 添加 / 完成 / 删除任务
-- 任务统计、空状态、清空已完成
+### 基础架构
+- 模块化拆分：Shell 层 + `modules/todo/`
+- `window.TodoModule` API 跨模块通信
+- CLAUDE.md 协作宪法（版本号、提交规范）
+- CHANGELOG.md + IMPLEMENTATION.md 文档体系
 
-## 第二阶段：本地持久化 ✅
+### 待办模块
+- FAB 悬浮添加 + 底部模态面板
+- 日历 DDL 选择器（年/月导航 « ‹ › »，过去不可选，今天蓝底）
+- 长按/右键上下文菜单 → 编辑
+- 双击原地编辑
+- 活跃任务在上，已完成沉底 + 内凹分隔阴影
+- 任务卡片悬浮阴影
 
-- localStorage 存取，刷新不丢失
-- 任务模型：`id`、`content`、`completed`、`myDay`、`dueDate`、`createdAt`
+### Myday
+- 顶栏太阳图标，左侧滑入面板
+- 自动汇集 deadline = 今天的未完成任务
 
-## 第三阶段：PWA 升级 ✅
+### 数据
+- 字段：`id`、`content`、`completed`、`deadline`
+- localStorage key `todo_data`
+- 旧字段自动迁移 + 过期任务自动清理
 
-- manifest.json（standalone 模式、主题色 #4a90d9）
-- service-worker.js（install 预缓存 + cache-first + activate 清理旧缓存）
-- icon.svg（蓝紫渐变圆角矩形 + 白色对勾）
-- 在线/离线浮动横幅 + 顶部栏 WiFi 状态图标
-
-## 第四阶段：增强体验 ✅
-
-- 搜索框（实时过滤，大小写不敏感）
-- 过滤器：全部 / 未完成 / 已完成 / 我的一天
-- 原地编辑：双击进入编辑，Enter 确认，blur / Escape 取消
-- "我的一天"星标功能（☆/★）
-- 创建时间戳 + 截止日期显示（过期红色高亮）
-
-## 第五阶段：原生 App 化 UI ✅
-
-- 顶部固定导航栏（WiFi 状态图标 + TODO 标题，safe-area 适配）
-- 底部固定功能栏（"待办"标签页入口，预留扩展）
-- FAB 悬浮添加按钮（右下角圆形 + 号，带阴影，不遮挡底部栏）
-- 底部滑入模态面板添加任务（内容 + 可选截止日期）
-- 数据模型迁移：`text→content`，`done→completed`，新增 `dueDate`
+### PWA
+- manifest.json + service-worker.js（cache-first + 静默更新）
+- APP_VERSION 版本号同步
+- icon.svg + 离线横幅（240px 居中）
+- 顶部固定栏（太阳 + WiFi + TODO 标题）
+- 底部固定栏（对勾图标）
 
 ---
 
 ## 下一步可选方向
 
-| 序号 | 功能 | 说明 |
-|------|------|------|
-| A | **拖拽排序** | 拖动任务项调整顺序，同步到 localStorage |
-| B | **通知提醒** | Notification API，截止任务到期推送 |
-| C | **深色模式** | 跟随系统 / 手动切换 |
-| D | **数据导出/导入** | JSON 导出备份，导入恢复 |
-| E | **键盘快捷键** | Ctrl+K 搜索、Ctrl+N 新建 |
-| F | **热力图/统计** | 完成率日历热力图 |
+| 序号 | 功能 | 类型 | 说明 |
+|------|------|------|------|
+| A | **记账模块** | 新模块 | 收支记录、分类统计 |
+| B | **笔记模块** | 新模块 | Markdown 笔记、富文本 |
+| C | **通知提醒** | 待办增强 | Notification API，截止任务到期推送 |
+| D | **深色模式** | 全局 UI | 跟随系统 / 手动切换 |
+| E | **数据导出/导入** | 数据 | JSON 导出备份，导入恢复 |
+| F | **拖拽排序** | 待办增强 | 拖动任务项调整顺序 |
