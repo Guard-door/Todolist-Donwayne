@@ -1,1 +1,0 @@
-{"type":"click","text":"A\n    \n      FLIP 动画\n      流程：记录 A 和 B 的 getBoundingClientRect() → 交换 DOM 位置 → 计算 delta → 设 transform 补偿 → 清除 transform 触发 transition → 两个元素同时对滑\n      优点：两个元素都有动画，视觉效果最流畅\n      风险：FLIP 计算须精确，如果同时还有其他 DOM 操作可能冲突","choice":"flip","id":null,"timestamp":1779293343580}
