@@ -136,12 +136,10 @@ function render() {
     li.addEventListener('dragstart', onDragStart);
     li.addEventListener('dragend', onDragEnd);
     li.addEventListener('dragover', onDragOver);
-
     li.addEventListener('drop', onDrop);
-    // 触摸拖拽
-    li.addEventListener('touchstart', onTouchStart, { passive: false });
-    li.addEventListener('touchmove', onTouchMove, { passive: false });
-    li.addEventListener('touchend', onTouchEnd);
+    li.addEventListener('touchstart', onTouchDnDStart, { passive: false });
+    li.addEventListener('touchmove', onTouchDnDMove, { passive: false });
+    li.addEventListener('touchend', onTouchDnDEnd);
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -181,45 +179,34 @@ function render() {
   });
 }
 
-/* ── 拖拽排序（Edge 风格：实时让位） ──────────────────── */
+/* ── 拖拽排序 ────────────────────────────────────────── */
 
 let dragSrcId = null;
-let dragViewIdx = -1;
+let dragSrcEl = null;
 let dragInsertIdx = -1;
 let touchClone = null;
 let touchStartY = 0;
-let touchMoved = false;
-const GAP_HEIGHT = 8;
+let touchStartTime = 0;
+let touchDragActive = false;
+const indicator = document.createElement('div');
+indicator.className = 'drag-indicator';
+document.body.appendChild(indicator);
 
 function getViewItems() {
   return [...todos].sort((a, b) => a.completed - b.completed);
 }
 
-function viewIdxOf(id) {
-  return getViewItems().findIndex(t => t.id === +id);
+function isSameGroup(id1, id2) {
+  const v = getViewItems();
+  const a = v.find(t => t.id === +id1);
+  const b = v.find(t => t.id === +id2);
+  if (!a || !b) return false;
+  return a.completed === b.completed;
 }
 
-/* 插入间隙占位元素 */
-function showGapAt(idx) {
-  removeGap();
-  const items = todoList.querySelectorAll('.todo-item');
-  const gap = document.createElement('li');
-  gap.className = 'drag-gap';
-  gap.style.height = GAP_HEIGHT + 'px';
-  if (idx >= items.length) {
-    todoList.appendChild(gap);
-  } else {
-    todoList.insertBefore(gap, items[idx]);
-  }
-}
-
-function removeGap() {
-  const gap = todoList.querySelector('.drag-gap');
-  if (gap) gap.remove();
-}
-
+/* 从 clientY 计算应在哪个可见项之前插入 */
 function insertIdxFromY(clientY) {
-  const items = todoList.querySelectorAll('.todo-item:not(.dragging)');
+  const items = todoList.querySelectorAll('.todo-item:not(.drag-hidden)');
   let idx = 0;
   for (const el of items) {
     const r = el.getBoundingClientRect();
@@ -229,21 +216,43 @@ function insertIdxFromY(clientY) {
   return items.length;
 }
 
+/* 蓝色指示线定位 */
+function moveIndicator(clientY) {
+  const items = todoList.querySelectorAll('.todo-item:not(.drag-hidden)');
+  if (items.length === 0) { indicator.style.display = 'none'; return; }
+  const idx = insertIdxFromY(clientY);
+  const listRect = todoList.getBoundingClientRect();
+  if (idx >= items.length) {
+    const last = items[items.length - 1];
+    indicator.style.top = (last.getBoundingClientRect().bottom - listRect.top) + 'px';
+  } else {
+    indicator.style.top = (items[idx].getBoundingClientRect().top - listRect.top) + 'px';
+  }
+  indicator.style.left = '0';
+  indicator.style.width = '100%';
+  indicator.style.display = 'block';
+}
+
+function hideIndicator() {
+  indicator.style.display = 'none';
+}
+
 /* ── 桌面端 ──────────────────────────────────────────── */
 
 function onDragStart(e) {
   dragSrcId = this.dataset.id;
-  dragViewIdx = viewIdxOf(dragSrcId);
-  this.classList.add('dragging');
+  dragSrcEl = this;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', dragSrcId);
+  // 延迟隐藏源元素，让浏览器先截取拖拽图像
+  requestAnimationFrame(() => { this.classList.add('drag-hidden'); });
 }
 
 function onDragEnd() {
-  this.classList.remove('dragging');
-  removeGap();
+  if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
+  hideIndicator();
   dragSrcId = null;
-  dragViewIdx = -1;
+  dragSrcEl = null;
   dragInsertIdx = -1;
 }
 
@@ -251,75 +260,82 @@ function onDragOver(e) {
   e.preventDefault();
   if (!dragSrcId) return;
   e.dataTransfer.dropEffect = 'move';
-  const idx = insertIdxFromY(e.clientY);
-  if (idx !== dragInsertIdx) {
-    dragInsertIdx = idx;
-    showGapAt(idx);
+  if (dragSrcId !== this.dataset.id && isSameGroup(dragSrcId, this.dataset.id)) {
+    moveIndicator(e.clientY);
   }
 }
 
 function onDrop(e) {
   e.preventDefault();
-  removeGap();
-  this.classList.remove('dragging');
   if (!dragSrcId || dragSrcId === this.dataset.id) return;
-  commitReorder(dragSrcId, insertIdxFromY(e.clientY));
+  const idx = insertIdxFromY(e.clientY);
+  commitReorder(dragSrcId, idx);
+  if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
+  hideIndicator();
   dragSrcId = null;
+  dragSrcEl = null;
 }
 
 /* ── 移动端触摸拖拽 ──────────────────────────────────── */
 
-function onTouchStart(e) {
+function onTouchDnDStart(e) {
   touchStartY = e.touches[0].clientY;
-  touchMoved = false;
+  touchStartTime = Date.now();
+  touchDragActive = false;
 }
 
-function onTouchMove(e) {
-  const dy = Math.abs(e.touches[0].clientY - touchStartY);
-  if (dy > 10) {
-    touchMoved = true;
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
+function onTouchDnDMove(e) {
+  if (touchDragActive) {
     e.preventDefault();
-
-    if (!touchClone) {
-      dragSrcId = this.dataset.id;
-      dragViewIdx = viewIdxOf(dragSrcId);
-      const li = this;
-      li.classList.add('dragging');
-      touchClone = li.cloneNode(true);
-      touchClone.className += ' touch-clone';
-      touchClone.style.cssText = `
-        position:fixed; left:${li.getBoundingClientRect().left}px;
-        top:${e.touches[0].clientY - 30}px; width:${li.offsetWidth}px;
-        z-index:500; pointer-events:none; opacity:0.5;
-        box-shadow:0 8px 30px rgba(0,0,0,0.2); border-radius:10px;
-      `;
-      document.body.appendChild(touchClone);
-    }
     touchClone.style.top = (e.touches[0].clientY - 30) + 'px';
     const idx = insertIdxFromY(e.touches[0].clientY);
     if (idx !== dragInsertIdx) {
       dragInsertIdx = idx;
-      showGapAt(idx);
+      moveIndicator(e.touches[0].clientY);
     }
+    return;
+  }
+
+  const dy = Math.abs(e.touches[0].clientY - touchStartY);
+  const dt = Date.now() - touchStartTime;
+  if (dy > 8 || dt > 400) {
+    touchDragActive = true;
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+    e.preventDefault();
+
+    dragSrcId = this.dataset.id;
+    dragSrcEl = this;
+    this.classList.add('drag-hidden');
+
+    const li = this;
+    const rect = li.getBoundingClientRect();
+    touchClone = li.cloneNode(true);
+    touchClone.className = 'todo-item touch-clone';
+    touchClone.style.cssText = `
+      position:fixed; left:${rect.left}px; top:${e.touches[0].clientY - 30}px;
+      width:${rect.width}px; z-index:500; pointer-events:none; opacity:0.5;
+      box-shadow:0 8px 30px rgba(0,0,0,0.18); border-radius:10px;
+      background:#fff;
+    `;
+    document.body.appendChild(touchClone);
   }
 }
 
-function onTouchEnd() {
-  if (touchClone) {
-    document.body.removeChild(touchClone);
-    touchClone = null;
+function onTouchDnDEnd() {
+  if (touchDragActive) {
+    if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
+    if (dragSrcEl) dragSrcEl.classList.remove('drag-hidden');
+    hideIndicator();
+    if (dragSrcId && dragInsertIdx >= 0) {
+      commitReorder(dragSrcId, dragInsertIdx);
+    }
+    dragSrcId = null;
+    dragSrcEl = null;
+    dragInsertIdx = -1;
+    touchDragActive = false;
+    return;
   }
-  removeGap();
-  document.querySelector('.todo-item.dragging')?.classList.remove('dragging');
-  if (dragSrcId && dragInsertIdx >= 0 && dragInsertIdx !== dragViewIdx) {
-    commitReorder(dragSrcId, dragInsertIdx);
-  }
-  dragSrcId = null;
-  dragViewIdx = -1;
-  dragInsertIdx = -1;
-  touchMoved = false;
 }
 
 /* ── 提交重排 ────────────────────────────────────────── */
@@ -327,32 +343,32 @@ function onTouchEnd() {
 function commitReorder(srcId, toViewIdx) {
   const view = getViewItems();
   const srcViewIdx = view.findIndex(t => t.id === +srcId);
-  if (srcViewIdx === -1 || srcViewIdx === toViewIdx) return;
+  if (srcViewIdx === -1) return;
 
-  // 从原数组移除
+  // 限制同组
+  let destViewIdx = toViewIdx;
+  if (destViewIdx < 0) destViewIdx = 0;
+  if (destViewIdx > view.length) destViewIdx = view.length;
+  // 确保目标位置与源同组
+  const srcCompleted = view[srcViewIdx].completed;
+  if (destViewIdx > 0 && view[Math.min(destViewIdx - 1, view.length - 1)].completed !== srcCompleted) destViewIdx = srcViewIdx;
+  if (destViewIdx < view.length && view[destViewIdx] && view[destViewIdx].completed !== srcCompleted) destViewIdx = srcViewIdx;
+  if (destViewIdx === srcViewIdx) return;
+
   const srcArrIdx = findIndex(+srcId);
   const [moved] = todos.splice(srcArrIdx, 1);
 
-  // 计算在原数组中的插入位置
-  // 找到 toViewIdx 在视图中的邻居，映射回原数组
   let insertArrIdx;
-  if (toViewIdx === 0) {
-    // 插入到最前面：找到新视图第一个元素在原数组的位置
-    const firstView = view[0];
-    insertArrIdx = firstView.id === moved.id ? 0 : findIndex(firstView.id);
-    if (firstView.id !== moved.id && srcArrIdx < insertArrIdx) insertArrIdx--;
+  if (destViewIdx === 0) {
+    insertArrIdx = 0;
   } else {
-    // 插入到 view[toViewIdx] 之前，即 view[toViewIdx-1] 之后
-    const anchor = view[toViewIdx > srcViewIdx ? toViewIdx : toViewIdx - 1];
+    const anchor = view[destViewIdx > srcViewIdx ? destViewIdx : destViewIdx - 1];
     insertArrIdx = findIndex(anchor.id);
-    if (toViewIdx > srcViewIdx) {
-      // 插入到锚点之前
-    } else {
-      insertArrIdx++; // 插入到锚点之后
-    }
+    if (destViewIdx <= srcViewIdx) insertArrIdx++;
+    if (srcArrIdx < insertArrIdx) insertArrIdx--;
   }
 
-  todos.splice(Math.min(insertArrIdx, todos.length), 0, moved);
+  todos.splice(insertArrIdx, 0, moved);
   save();
   render();
 }

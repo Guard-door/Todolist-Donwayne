@@ -288,6 +288,7 @@
   flex-direction: column;
   gap: 8px;
   min-height: 40px;
+  position: relative;
 }
 
 .todo-item {
@@ -307,16 +308,32 @@
 }
 
 .todo-item {
-  transition: transform 0.15s ease, margin 0.15s ease;
+  transition: transform 0.2s ease;
 }
 
-.todo-item.dragging { opacity: 0.5; }
+.todo-item.drag-hidden {
+  visibility: hidden;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border: none;
+  opacity: 0;
+}
 
-.drag-gap {
-  height: 8px;
-  background: transparent;
-  transition: all 0.15s ease;
+.drag-indicator {
+  position: absolute;
+  height: 2px;
+  background: #4a90d9;
+  transition: top 0.12s ease;
   pointer-events: none;
+  z-index: 400;
+  display: none;
+  border-radius: 1px;
+}
+
+.touch-clone {
+  transition: none !important;
 }
 
 /* 已完成分组顶部分隔 */
