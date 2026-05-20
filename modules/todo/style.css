@@ -386,6 +386,10 @@
 
 .drag-floating { transition: none !important; }
 
+.todo-item.drag-blank > * {
+  visibility: hidden;
+}
+
 /* ── 空状态 ──────────────────────────────────────────────── */
 
 .empty-state {
