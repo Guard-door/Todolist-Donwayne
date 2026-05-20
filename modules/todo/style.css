@@ -252,11 +252,11 @@
   justify-content: center;
   border-radius: 6px;
   font-size: 16px;
-  color: #bbb;
-  transition: color 0.15s, background 0.15s;
+  color: #e04848;
+  transition: background 0.15s;
 }
 
-.ddl-clear:hover { color: #e04848; background: #ffeaea; }
+.ddl-clear:hover { background: #ffeaea; }
 
 .ddl-clear[hidden] { display: none; }
 
@@ -372,13 +372,13 @@
   justify-content: center;
   border-radius: 6px;
   font-size: 16px;
-  color: #bbb;
+  color: #e04848;
   transition: all 0.2s;
   visibility: hidden;
 }
 
 .todo-item:hover .todo-delete { visibility: visible; }
-.todo-delete:hover { background: #ffeaea; color: #e04848; }
+.todo-delete:hover { background: #ffeaea; }
 
 /* ── 空状态 ──────────────────────────────────────────────── */
 
