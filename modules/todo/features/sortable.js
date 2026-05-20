@@ -187,6 +187,7 @@ function enableSortable(listEl, options) {
   /* ── 移动端 Touch ───────────────────── */
 
   function onTouchStart(e) {
+    e.preventDefault();
     // 防重入
     if (dragLocked) return;
     dragLocked = true;
