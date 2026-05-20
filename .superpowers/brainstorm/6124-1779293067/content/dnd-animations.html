@@ -1,0 +1,71 @@
+<h2>Edge 交换 — 三种动画方式对比</h2>
+<p class="subtitle">桌面端用 HTML5 DnD，移动端用 Touch Events。选择动画策略</p>
+
+<div class="options">
+  <div class="option" data-choice="flip" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>FLIP 动画</h3>
+      <p><strong>流程：</strong>记录 A 和 B 的 getBoundingClientRect() → 交换 DOM 位置 → 计算 delta → 设 transform 补偿 → 清除 transform 触发 transition → 两个元素同时对滑</p>
+      <p><strong>优点：</strong>两个元素都有动画，视觉效果最流畅</p>
+      <p><strong>风险：</strong>FLIP 计算须精确，如果同时还有其他 DOM 操作可能冲突</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="direct-render" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>直接重渲染</h3>
+      <p><strong>流程：</strong>交换数组元素 → save() → render() → 整个列表重新生成 → CSS transition 让移动的元素平滑过渡</p>
+      <p><strong>优点：</strong>代码最简单，永远和数组一致，不会出现 DOM 不同步</p>
+      <p><strong>风险：</strong>全量渲染性能稍差，浮动克隆在 render 时会丢失，需要重新创建</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>混合：目标滑入 + 拖完统一 render</h3>
+      <p><strong>流程：</strong>拖拽中只动画被交换的目标元素（目标滑入源位置，源元素作为新 gap）→ 浮动克隆继续跟随指针 → touchend/drop 时统一 save + render</p>
+      <p><strong>优点：</strong>动画简单（只移一个元素），不丢浮动克隆，最终渲染确保一致性</p>
+      <p><strong>风险：</strong>交换次数多时，浮动位置和实际位置可能产生偏差</p>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">动画步骤对比（拖拽任务 1 向下与任务 3 交换）</div>
+  <div class="mockup-body">
+    <div class="split">
+      <div style="border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;flex:1;">
+        <p style="font-weight:700;margin:0 0 8px 0;">A: FLIP</p>
+        <p style="font-size:12px;color:#888;">步骤1: 记录位置</p>
+        <div style="background:#e8f0fb;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">任务1 (r1)</div>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">任务2</div>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">任务3 (r3)</div>
+        <p style="font-size:12px;color:#888;margin-top:8px;">步骤2: swap DOM + transform补偿 → transition滑入</p>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;border:1px dashed #4a90d9;">任务3 ← 动画滑入</div>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">任务2</div>
+        <div style="background:#e8f0fb;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;opacity:0.3;">任务1 → 滑动</div>
+      </div>
+      <div style="border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center;flex:1;">
+        <p style="font-weight:700;margin:0 0 8px 0;">B: 重渲染</p>
+        <p style="font-size:12px;color:#888;">步骤1: splice数组</p>
+        <div style="background:#f0f0f0;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">todos = [task3, task2, task1]</div>
+        <p style="font-size:12px;color:#888;margin-top:8px;">步骤2: save() + render()</p>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;border:1px dashed #aaa;">task3 (transition滑动)</div>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">task2</div>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;border:1px dashed #aaa;">task1 (transition滑动)</div>
+        <p style="font-size:11px;color:red;margin-top:6px;">! 浮动克隆需重建</p>
+      </div>
+      <div style="border:2px solid #4a90d9;border-radius:8px;padding:10px;text-align:center;flex:1;">
+        <p style="font-weight:700;margin:0 0 8px 0;color:#4a90d9;">C: 混合 ★</p>
+        <p style="font-size:12px;color:#888;">拖拽中: 只移目标元素</p>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;border:1px dashed #4a90d9;">任务3 ← 目标滑入gap</div>
+        <div style="background:#fff;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;">任务2</div>
+        <div style="background:#e8f0fb;padding:4px 8px;margin:2px 0;border-radius:4px;font-size:13px;opacity:0.3;">任务1 (新gap,浮动跟随)</div>
+        <p style="font-size:12px;color:#888;margin-top:8px;">松手: save() + render() — 1次</p>
+      </div>
+    </div>
+  </div>
+</div>
