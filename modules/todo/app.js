@@ -274,12 +274,17 @@ function performSwap(targetId) {
   animateElementSwap(srcViewEl, tgtViewEl);
 
   // 交换 DOM 中两个元素的位置
-  const placeholder = document.createElement('li');
-  placeholder.style.display = 'none';
-  srcViewEl.parentNode.insertBefore(placeholder, srcViewEl);
-  tgtViewEl.parentNode.insertBefore(srcViewEl, tgtViewEl);
-  placeholder.parentNode.insertBefore(tgtViewEl, placeholder);
-  placeholder.remove();
+  const parent = srcViewEl.parentNode;
+  const nextA = srcViewEl.nextSibling;
+  const nextB = tgtViewEl.nextSibling;
+  if (nextA === tgtViewEl) {
+    parent.insertBefore(tgtViewEl, srcViewEl);
+  } else if (nextB === srcViewEl) {
+    parent.insertBefore(srcViewEl, tgtViewEl);
+  } else {
+    parent.insertBefore(srcViewEl, nextB);
+    parent.insertBefore(tgtViewEl, nextA);
+  }
 
   // 交换数组
   [todos[srcIdx], todos[tgtIdx]] = [todos[tgtIdx], todos[srcIdx]];
@@ -448,7 +453,7 @@ function addLongPress(el, id) {
   function start(e) {
     started = false;
     longPressTimer = setTimeout(() => {
-      if (touchMoved) return;
+      if (touchDragging) return;
       started = true;
       longPressId = id;
       showContextMenu(e);
