@@ -1,6 +1,27 @@
 /* ================================================================
-   Shell — WiFi、离线横幅、Myday 侧边面板、PWA
+   Shell — 模块加载、WiFi、离线横幅、Myday 侧边面板、PWA
    ================================================================ */
+
+/* ── 加载 Todo 模块 ───────────────────────────────────── */
+
+function loadTodoHTML(cb) {
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', 'modules/todo/index.html');
+  xhr.onload = () => {
+    document.getElementById('app-content').innerHTML = xhr.responseText;
+    cb();
+  };
+  xhr.onerror = () => cb();
+  xhr.send();
+}
+
+function loadTodoJS(cb) {
+  const script = document.createElement('script');
+  script.src = 'modules/todo/app.js';
+  script.onload = cb;
+  script.onerror = cb;
+  document.body.appendChild(script);
+}
 
 /* ── WiFi 图标（单一 SVG 动态绘制） ───────────────────── */
 
@@ -95,20 +116,30 @@ mydayOverlay.addEventListener('click', closeMyday);
 
 /* ── PWA（仅在 https/http 下注册） ─────────────────────── */
 
-if (location.protocol === 'https:' || location.protocol === 'http:') {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').then((reg) => {
-      reg.addEventListener('updatefound', () => {
-        const worker = reg.installing;
-        worker.addEventListener('statechange', () => {
-          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-            worker.postMessage('skipWaiting');
-          }
+function initPWA() {
+  if (location.protocol === 'https:' || location.protocol === 'http:') {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const worker = reg.installing;
+          worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              worker.postMessage('skipWaiting');
+            }
+          });
         });
+      }).catch(() => {});
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        location.reload();
       });
-    }).catch(() => {});
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      location.reload();
-    });
+    }
   }
 }
+
+/* ── 启动：先加载 Todo 模块，再初始化 Shell ────────────── */
+
+loadTodoHTML(() => {
+  loadTodoJS(() => {
+    initPWA();
+  });
+});

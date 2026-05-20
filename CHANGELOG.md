@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.0
+
+### 架构
+- 恢复模块化 HTML：Todo HTML 片段抽取到 modules/todo/index.html
+- Shell 通过 XHR 加载 HTML + 动态注入 JS，保持 file:// 兼容
+
 ## v1.2.3
 
 ### 配置

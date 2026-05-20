@@ -1,0 +1,61 @@
+<!-- Todo 模块 HTML 片段 -->
+
+<!-- 悬浮添加按钮 -->
+<button id="fabBtn" class="fab" aria-label="添加任务">
+  <svg viewBox="0 0 24 24" width="24" height="24">
+    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>
+</button>
+
+<!-- 添加任务模态框 -->
+<div id="modalOverlay" class="modal-overlay" hidden>
+  <div id="modalPanel" class="modal-panel">
+    <h2 class="modal-title">Add Task</h2>
+
+    <input
+      type="text"
+      id="modalContent"
+      class="modal-input"
+      placeholder="Content"
+      autocomplete="off"
+    >
+
+    <div class="modal-field">
+      <div class="ddl-row">
+        <button type="button" id="ddlToggle" class="ddl-toggle">DDL</button>
+        <button type="button" id="ddlClear" class="ddl-clear" hidden>✕</button>
+      </div>
+      <div id="ddlCalendar" class="calendar-panel" hidden>
+        <div class="cal-header">
+          <button class="cal-nav" id="calPrevYear" aria-label="上一年">«</button>
+          <button class="cal-nav" id="calPrev" aria-label="上个月">‹</button>
+          <span id="calTitle" class="cal-title">2026年 5月</span>
+          <button class="cal-nav" id="calNext" aria-label="下个月">›</button>
+          <button class="cal-nav" id="calNextYear" aria-label="下一年">»</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div id="calDays" class="cal-days"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="modalCancel" class="modal-btn modal-btn-cancel">取消</button>
+      <button id="modalConfirm" class="modal-btn modal-btn-confirm">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 任务列表区域 -->
+<ul id="todoList" class="todo-list" aria-label="待办事项列表"></ul>
+
+<div id="emptyState" class="empty-state">
+  <p id="welcomeMsg">Add To Work ✨</p>
+</div>
+
+<!-- 长按上下文菜单 -->
+<div id="contextMenu" class="context-menu" hidden>
+  <button id="ctxEdit" class="context-menu-item">编辑</button>
+</div>
