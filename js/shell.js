@@ -2,6 +2,8 @@
    Shell — 模块加载、WiFi、离线横幅、Myday 侧边面板、PWA
    ================================================================ */
 
+const APP_VERSION = '1.4.0';
+
 /* ── 加载 Todo 模块 ───────────────────────────────────── */
 
 function loadTodoHTML(cb) {
@@ -113,6 +115,30 @@ topSunBtn.addEventListener('click', () => {
 });
 
 mydayOverlay.addEventListener('click', closeMyday);
+
+/* ── 设置面板 ────────────────────────────────────────── */
+
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsPanel = document.getElementById('settingsPanel');
+document.getElementById('settingsVersion').textContent = APP_VERSION;
+
+function openSettings() {
+  settingsOverlay.hidden = false;
+  settingsPanel.classList.add('open');
+}
+
+function closeSettings() {
+  settingsOverlay.hidden = true;
+  settingsPanel.classList.remove('open');
+}
+
+settingsToggle.addEventListener('click', () => {
+  if (settingsPanel.classList.contains('open')) closeSettings();
+  else openSettings();
+});
+
+settingsOverlay.addEventListener('click', closeSettings);
 
 /* ── PWA（仅在 https/http 下注册） ─────────────────────── */
 

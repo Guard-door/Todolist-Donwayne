@@ -30,8 +30,29 @@
       <div id="topWifiIcon"></div>
     </div>
     <span class="top-bar-title">TODO</span>
-    <div class="top-bar-right"></div>
+    <div class="top-bar-right">
+      <button id="settingsToggle" class="top-menu-btn" aria-label="设置">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <line x1="4" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
   </nav>
+
+  <!-- 设置面板遮罩 -->
+  <div id="settingsOverlay" class="settings-overlay" hidden></div>
+
+  <!-- 设置面板（右侧滑入） -->
+  <aside id="settingsPanel" class="settings-panel">
+    <h2 class="settings-title">设置</h2>
+    <div class="settings-body"></div>
+    <div class="settings-footer">
+      <span id="settingsVersion"></span>
+      <span class="settings-signature">by Donwayne</span>
+    </div>
+  </aside>
 
   <!-- Myday 侧边面板遮罩 -->
   <div id="mydayOverlay" class="myday-overlay" hidden></div>
