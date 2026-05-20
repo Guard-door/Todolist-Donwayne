@@ -45,6 +45,10 @@ MAJOR.MINOR.PATCH  例 v1.1.0
 
 Commit message 只写 `vX.Y.Z`。
 
+## 工作流规范
+
+**强制 Brainstorming**：任何新增功能、模块、组件、UI 交互或行为变更前，必须先执行 superpowersbrainstorming 探索意图和设计，再进行实现。Bug 修复、文案修改、样式微调可跳过。
+
 ---
 
 本项目所有代码变更、版本管理、部署流程均须遵循此宪法。在后续对话中，Claude Code 应主动参考并依据此文件执行。
