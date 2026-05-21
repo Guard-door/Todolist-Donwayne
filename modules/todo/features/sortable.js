@@ -127,9 +127,8 @@ function enableSortable(listEl, options) {
   function activateDrag() {
     isDragReady = false;
     isDragging = true;
-    try { dragEl.setPointerCapture(pointerId); } catch (e) {}
-    if (isTouch) {
-      dragEl.style.touchAction = 'none';
+    if (!isTouch) {
+      try { dragEl.setPointerCapture(pointerId); } catch (e) {}
     }
     dragEl.style.opacity = '0';
     floating = createFloating(dragEl, dragEl.getBoundingClientRect().left, startY - 30);
@@ -184,6 +183,10 @@ function enableSortable(listEl, options) {
     lastDir = 0;
     lastSwapped = null;
     isTouch = e.pointerType === 'touch';
+
+    if (isTouch) {
+      dragEl.style.touchAction = 'none';
+    }
 
     isDragReady = true;
 

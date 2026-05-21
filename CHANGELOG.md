@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.2
+
+### 待办
+- 修复手机端拖拽变滚动：pointerdown 时同步 touchAction='none' 抢在浏览器手势识别之前
+- 触摸路径不再 setPointerCapture（依赖隐式捕获），避免干预浏览器的 touch-action 重估
+
 ## v1.8.1
 
 ### 待办
