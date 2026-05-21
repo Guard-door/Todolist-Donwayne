@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.0
+
+### 待办
+- 拖拽自动滚屏：拖到视口边缘 80px 触发 window.scrollBy
+- contextmenu 从全局阻止改为拖拽激活后动态阻止（不拖拽时保留浏览器行为）
+- 保留 v1.6.18：振动反馈、-webkit-touch-callout:none
+
 ## v1.6.18
 
 ### 待办

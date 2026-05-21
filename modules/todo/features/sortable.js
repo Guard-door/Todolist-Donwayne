@@ -128,12 +128,31 @@ function enableSortable(listEl, options) {
 
   /* ── 清理 ───────────────────────────── */
 
+  function preventContextMenu(e) { e.preventDefault(); }
+
   function resetDragState() {
     removeFloating();
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
-    if (dragEl) { dragEl.style.opacity = ''; dragEl.style.touchAction = ''; }
+    if (dragEl) {
+      dragEl.style.opacity = ''; dragEl.style.touchAction = '';
+      dragEl.removeEventListener('contextmenu', preventContextMenu);
+    }
     dragId = null; dragEl = null; lastSwapped = null;
     active = false; touchDragging = false; touchStartX = 0; touchStartY = 0;
+  }
+
+  /* ── 自动滚屏 ──────────────────────── */
+
+  function autoScroll(clientY) {
+    const edge = 80;
+    const viewH = window.innerHeight;
+    const curScroll = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - viewH;
+    if (clientY > viewH - edge && curScroll < maxScroll) {
+      window.scrollBy(0, (clientY - (viewH - edge)) / edge * 6);
+    } else if (clientY < edge && curScroll > 0) {
+      window.scrollBy(0, -(edge - clientY) / edge * 6);
+    }
   }
 
   /* ── 桌面端 DnD ─────────────────────── */
@@ -163,6 +182,7 @@ function enableSortable(listEl, options) {
     if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
     if (dir) lastDir = dir;
     lastClientY = e.clientY;
+    autoScroll(e.clientY);
     const target = findSwapTarget(dir);
     if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
   }
@@ -184,6 +204,7 @@ function enableSortable(listEl, options) {
     touchTimer = setTimeout(() => {
       touchTimer = null;
       try { navigator.vibrate(15); } catch (e) { /* no-op */ }
+      el.addEventListener('contextmenu', preventContextMenu);
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
       el.style.touchAction = 'none';
@@ -203,6 +224,7 @@ function enableSortable(listEl, options) {
       if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
       if (dir) lastDir = dir;
       lastClientY = cy;
+      autoScroll(cy);
       const target = findSwapTarget(dir);
       if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
       return;
@@ -241,5 +263,4 @@ function bindSortableItem(li, data) {
   li.addEventListener('touchmove', data.onTouchMove, { passive: false });
   li.addEventListener('touchend', data.onTouchEnd);
   li.addEventListener('touchcancel', data.onTouchCancel);
-  li.addEventListener('contextmenu', (e) => e.preventDefault());
 }
