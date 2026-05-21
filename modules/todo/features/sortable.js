@@ -68,8 +68,7 @@ function enableSortable(listEl, options) {
     } else {
       // 未完成不能拖到分隔线下方
       const h = floating ? floating.offsetHeight : 56;
-      const maxY = sepRect.top - h;
-      if (y + h > maxY) return maxY;
+      if (y + h > sepRect.top) return sepRect.top - h;
     }
     return y;
   }
