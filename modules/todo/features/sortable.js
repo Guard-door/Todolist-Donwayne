@@ -19,6 +19,8 @@ function enableSortable(listEl, options) {
   let lastSwapped = null;
   let touchTimer = null;
   let touchDragging = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
 
   function getItems() {
     return Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
@@ -134,7 +136,7 @@ function enableSortable(listEl, options) {
   function resetDragState() {
     removeFloating();
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
-    if (dragEl) dragEl.style.opacity = '';
+    if (dragEl) { dragEl.style.opacity = ''; dragEl.style.touchAction = ''; }
     dragId = null; dragEl = null; lastSwapped = null;
     active = false; touchDragging = false;
   }
@@ -180,19 +182,18 @@ function enableSortable(listEl, options) {
   /* ── 移动端 Touch ───────────────────── */
 
   function onTouchStart(e) {
-    e.preventDefault();
-
     const el = this;
     const id = this.dataset.id;
-    const cx = e.touches[0].clientX;
-    const cy = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
     touchTimer = setTimeout(() => {
       touchTimer = null;
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
+      el.style.touchAction = 'none';
       el.style.opacity = '0';
-      floating = createFloating(el, el.getBoundingClientRect().left, cy - 30);
-      lastClientY = cy;
+      floating = createFloating(el, el.getBoundingClientRect().left, touchStartY - 30);
+      lastClientY = touchStartY;
       lastDir = 0;
     }, opt.touchDelay);
   }
@@ -210,7 +211,11 @@ function enableSortable(listEl, options) {
       if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
       return;
     }
-    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+    if (touchTimer) {
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      if (dx * dx + dy * dy > 100) { clearTimeout(touchTimer); touchTimer = null; }
+    }
   }
 
   function onTouchEnd() {
