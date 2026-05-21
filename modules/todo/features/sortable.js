@@ -132,7 +132,6 @@ function enableSortable(listEl, options) {
 
   function resetDragState() {
     removeFloating();
-    document.body.style.touchAction = '';
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (dragEl) {
       dragEl.style.opacity = '';
@@ -200,13 +199,14 @@ function enableSortable(listEl, options) {
   function onTouchStart(e) {
     const el = this;
     const id = this.dataset.id;
+    const ev = e;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchTimer = setTimeout(() => {
       touchTimer = null;
+      ev.preventDefault();
       try { navigator.vibrate(15); } catch (e) { /* no-op */ }
       el.addEventListener('contextmenu', preventContextMenu);
-      document.body.style.touchAction = 'none';
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
       el.style.opacity = '0';

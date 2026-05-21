@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.3
+
+### 待办
+- 修复死元素锁死：定时器内 ev.preventDefault() 打断浏览器，移除 body touchAction 切换
+
 ## v1.7.2
 
 ### 待办
