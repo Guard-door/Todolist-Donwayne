@@ -200,12 +200,10 @@ function enableSortable(listEl, options) {
   function onTouchStart(e) {
     const el = this;
     const id = this.dataset.id;
-    const ev = e;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchTimer = setTimeout(() => {
       touchTimer = null;
-      ev.preventDefault();
       try { navigator.vibrate(15); } catch (e) { /* no-op */ }
       el.addEventListener('contextmenu', preventContextMenu);
       el.style.touchAction = 'none';

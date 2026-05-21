@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.5
+
+### 待办
+- 移除异步 ev.preventDefault()（导致 android 触发 touchcancel 循环 → 闪烁+固定）
+- 仅靠 el.style.touchAction='none'（200ms 设置）阻止浏览器长按菜单
+
 ## v1.7.4
 
 ### 待办
