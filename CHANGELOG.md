@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.4
+
+### 待办
+- 拖拽激活时 el.style.touchAction='none' 强制接管触摸，清理时恢复 ''（CSS pan-y 回归）
+
 ## v1.7.3
 
 ### 待办

@@ -135,6 +135,7 @@ function enableSortable(listEl, options) {
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (dragEl) {
       dragEl.style.opacity = '';
+      dragEl.style.touchAction = '';
       dragEl.removeEventListener('contextmenu', preventContextMenu);
     }
     dragId = null; dragEl = null; lastSwapped = null;
@@ -207,6 +208,7 @@ function enableSortable(listEl, options) {
       ev.preventDefault();
       try { navigator.vibrate(15); } catch (e) { /* no-op */ }
       el.addEventListener('contextmenu', preventContextMenu);
+      el.style.touchAction = 'none';
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
       el.style.opacity = '0';

@@ -1,4 +1,4 @@
-const APP_VERSION = '1.7.3';
+const APP_VERSION = '1.7.4';
 const CACHE_NAME = 'todo-app-v' + APP_VERSION;
 const ASSETS = [
   '.',
