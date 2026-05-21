@@ -132,6 +132,7 @@ function enableSortable(listEl, options) {
 
   function resetDragState() {
     removeFloating();
+    document.body.style.touchAction = '';
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (dragEl) {
       dragEl.style.opacity = '';
@@ -205,6 +206,7 @@ function enableSortable(listEl, options) {
       touchTimer = null;
       try { navigator.vibrate(15); } catch (e) { /* no-op */ }
       el.addEventListener('contextmenu', preventContextMenu);
+      document.body.style.touchAction = 'none';
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
       el.style.opacity = '0';

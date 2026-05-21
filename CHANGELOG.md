@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.2
+
+### 待办
+- 拖拽激活时 body 设 touch-action:none 彻底锁死滚动，清理时恢复
+
 ## v1.7.1
 
 ### 待办
