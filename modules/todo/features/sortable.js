@@ -131,12 +131,6 @@ function enableSortable(listEl, options) {
 
   /* ── 清理 ───────────────────────────── */
 
-  function cleanup() {
-    removeFloating();
-    if (dragEl) dragEl.style.opacity = '';
-    dragId = null; dragEl = null; lastSwapped = null; active = false;
-  }
-
   function resetDragState() {
     removeFloating();
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
