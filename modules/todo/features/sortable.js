@@ -193,6 +193,8 @@ function enableSortable(listEl, options) {
         try { navigator.vibrate(15); } catch (e) { /* no-op */ }
         activateDrag();
       }, opt.touchDelay);
+    } else {
+      try { dragEl.setPointerCapture(pointerId); } catch (e) {}
     }
   }
 
@@ -254,7 +256,7 @@ function enableSortable(listEl, options) {
 function bindSortableItem(li, data) {
   if (!data || !li) return;
   li.addEventListener('pointerdown', data.onPointerDown);
-  li.addEventListener('pointermove', data.onPointerMove);
+  li.addEventListener('pointermove', data.onPointerMove, { passive: false });
   li.addEventListener('pointerup', data.onPointerUp);
   li.addEventListener('pointercancel', data.onPointerCancel);
 }

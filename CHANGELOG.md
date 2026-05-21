@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.1
+
+### 待办
+- 修复链式拖拽失效：桌面端 pointermove 丢失（mouse 无隐式捕获），onPointerDown 时立即 setPointerCapture
+- pointermove 加 passive:false 确保 preventDefault 生效
+
 ## v1.8.0
 
 ### 待办
