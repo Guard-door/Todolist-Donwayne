@@ -183,6 +183,7 @@ function enableSortable(listEl, options) {
     touchStartY = e.touches[0].clientY;
     touchTimer = setTimeout(() => {
       touchTimer = null;
+      try { navigator.vibrate(15); } catch (e) { /* no-op */ }
       touchDragging = true;
       dragId = id; dragEl = el; lastSwapped = null; active = true;
       el.style.touchAction = 'none';
@@ -240,4 +241,5 @@ function bindSortableItem(li, data) {
   li.addEventListener('touchmove', data.onTouchMove, { passive: false });
   li.addEventListener('touchend', data.onTouchEnd);
   li.addEventListener('touchcancel', data.onTouchCancel);
+  li.addEventListener('contextmenu', (e) => e.preventDefault());
 }

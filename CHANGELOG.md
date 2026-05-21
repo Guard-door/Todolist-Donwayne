@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.18
+
+### 待办
+- 修复移动端长按死元素：CSS -webkit-touch-callout:none + contextmenu 阻止浏览器默认行为吞 touchend
+- 振动反馈：长按激活拖拽时 navigator.vibrate(15)
+
 ## v1.6.17
 
 ### 待办
