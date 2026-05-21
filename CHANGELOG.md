@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.6.17
+
+### 待办
+- 多 agent 审查：删除 style.css 重复 dd-toggle 块、消除 findSwapTarget 双重 getItems()、移除死函数 indexOf、补充 touchStartX/Y 重置
+
 ## v1.6.15
 
 ### 待办

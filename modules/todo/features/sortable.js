@@ -26,10 +26,6 @@ function enableSortable(listEl, options) {
     return Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
   }
 
-  function indexOf(el) {
-    return getItems().indexOf(el);
-  }
-
   function isSameGroup(id1, id2) {
     if (!opt.isSameGroup) return true;
     return opt.isSameGroup(id1, id2);
@@ -109,7 +105,7 @@ function enableSortable(listEl, options) {
   function findSwapTarget(dir) {
     if (!floating) return null;
     const items = getItems();
-    const srcIdx = indexOf(dragEl);
+    const srcIdx = items.indexOf(dragEl);
     if (srcIdx === -1) return null;
     const floatRect = floating.getBoundingClientRect();
 
@@ -137,7 +133,7 @@ function enableSortable(listEl, options) {
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (dragEl) { dragEl.style.opacity = ''; dragEl.style.touchAction = ''; }
     dragId = null; dragEl = null; lastSwapped = null;
-    active = false; touchDragging = false;
+    active = false; touchDragging = false; touchStartX = 0; touchStartY = 0;
   }
 
   /* ── 桌面端 DnD ─────────────────────── */

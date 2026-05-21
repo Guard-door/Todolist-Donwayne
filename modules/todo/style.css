@@ -99,23 +99,6 @@
 .ddl-toggle:focus { border-color: #4a90d9; }
 .ddl-toggle.set { color: #1a1a2e; }
 
-/* DDL 开关按钮 */
-.ddl-toggle {
-  display: block;
-  width: 100%;
-  padding: 12px 14px;
-  border: 2px solid #e8ecf0;
-  border-radius: 8px;
-  font-size: 15px;
-  text-align: left;
-  color: #bbb;
-  background: #fafbfc;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-.ddl-toggle:focus { border-color: #4a90d9; }
-.ddl-toggle.set { color: #1a1a2e; }
-
 /* ── 日历面板（向上弹出） ────────────────────────────── */
 
 .calendar-panel {
