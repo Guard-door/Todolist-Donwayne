@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7.1
+
+### 待办
+- 用 touch-action: pan-y (CSS) 取代动态 touchAction 切换，从第一毫秒阻止浏览器手势，杜绝死元素
+
 ## v1.7.0
 
 ### 待办
