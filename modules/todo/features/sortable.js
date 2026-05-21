@@ -1,5 +1,5 @@
 /* ================================================================
-   sortable.js — 可拔插拖拽排序模块（Edge 风格：空白位 + 链式单向滑动）
+   sortable.js — 可拔插拖拽排序模块（Pointer Events 统一鼠标/触摸）
 
    接口：enableSortable(listEl, {
      onSortEnd(newOrder)  // 排序完成回调，newOrder = [id, id, ...]
@@ -12,15 +12,19 @@ function enableSortable(listEl, options) {
   if (!listEl) return () => {};
   const opt = Object.assign({ touchDelay: 200 }, options);
 
-  let dragId = null;
+  let isDragReady = false;
+  let isDragging = false;
+  let pointerId = null;
   let dragEl = null;
   let floating = null;
-  let active = false;
+  let dragId = null;
   let lastSwapped = null;
+  let startX = 0;
+  let startY = 0;
+  let lastClientY = 0;
+  let lastDir = 0;
   let touchTimer = null;
-  let touchDragging = false;
-  let touchStartX = 0;
-  let touchStartY = 0;
+  let isTouch = false;
 
   function getItems() {
     return Array.from(listEl.querySelectorAll('.todo-item:not(.drag-floating)'));
@@ -58,11 +62,9 @@ function enableSortable(listEl, options) {
     const sepRect = sep.getBoundingClientRect();
     const isCompleted = dragEl.classList.contains('completed');
     if (isCompleted) {
-      // 已完成不能拖到分隔线上方
       const minY = sepRect.bottom;
       if (y < minY) return minY;
     } else {
-      // 未完成不能拖到分隔线下方
       const h = floating ? floating.offsetHeight : 56;
       if (y + h > sepRect.top) return sepRect.top - h;
     }
@@ -74,14 +76,11 @@ function enableSortable(listEl, options) {
   function swapWithTarget(tgtEl) {
     const srcEl = dragEl;
     if (!srcEl || !tgtEl || srcEl === tgtEl) return;
-    const list = listEl;
-    if (!list.contains(srcEl) || !list.contains(tgtEl)) return;
+    if (!listEl.contains(srcEl) || !listEl.contains(tgtEl)) return;
     if (srcEl.parentNode !== tgtEl.parentNode) return;
 
-    // 记录旧位置
     const oldTgtTop = tgtEl.getBoundingClientRect().top;
 
-    // 交换 DOM
     const p = srcEl.parentNode;
     const na = srcEl.nextSibling;
     const nb = tgtEl.nextSibling;
@@ -89,7 +88,6 @@ function enableSortable(listEl, options) {
     else if (nb === srcEl) p.insertBefore(srcEl, tgtEl);
     else { p.insertBefore(srcEl, nb); p.insertBefore(tgtEl, na); }
 
-    // FLIP
     const newTgtTop = tgtEl.getBoundingClientRect().top;
     const delta = oldTgtTop - newTgtTop;
     tgtEl.style.transition = 'none';
@@ -109,14 +107,12 @@ function enableSortable(listEl, options) {
     if (srcIdx === -1) return null;
     const floatRect = floating.getBoundingClientRect();
 
-    // 向上：浮动顶部越过上方元素中线
     if (dir < 0 && srcIdx > 0) {
       const above = items[srcIdx - 1];
       if (!isSameGroup(dragId, above.dataset.id)) return null;
       const r = above.getBoundingClientRect();
       if (floatRect.top < r.top + r.height / 2) return above;
     }
-    // 向下：浮动底部越过下方元素中线
     if (dir > 0 && srcIdx < items.length - 1) {
       const below = items[srcIdx + 1];
       if (!isSameGroup(dragId, below.dataset.id)) return null;
@@ -128,7 +124,18 @@ function enableSortable(listEl, options) {
 
   /* ── 清理 ───────────────────────────── */
 
-  function preventContextMenu(e) { e.preventDefault(); }
+  function activateDrag() {
+    isDragReady = false;
+    isDragging = true;
+    try { dragEl.setPointerCapture(pointerId); } catch (e) {}
+    if (isTouch) {
+      dragEl.style.touchAction = 'none';
+    }
+    dragEl.style.opacity = '0';
+    floating = createFloating(dragEl, dragEl.getBoundingClientRect().left, startY - 30);
+    lastClientY = startY;
+    lastDir = 0;
+  }
 
   function resetDragState() {
     removeFloating();
@@ -136,10 +143,16 @@ function enableSortable(listEl, options) {
     if (dragEl) {
       dragEl.style.opacity = '';
       dragEl.style.touchAction = '';
-      dragEl.removeEventListener('contextmenu', preventContextMenu);
+      try { dragEl.releasePointerCapture(pointerId); } catch (e) {}
     }
-    dragId = null; dragEl = null; lastSwapped = null;
-    active = false; touchDragging = false; touchStartX = 0; touchStartY = 0;
+    isDragReady = false;
+    isDragging = false;
+    pointerId = null;
+    dragEl = null;
+    dragId = null;
+    lastSwapped = null;
+    startX = 0; startY = 0;
+    isTouch = false;
   }
 
   /* ── 自动滚屏 ──────────────────────── */
@@ -156,112 +169,92 @@ function enableSortable(listEl, options) {
     }
   }
 
-  /* ── 桌面端 DnD ─────────────────────── */
+  /* ── Pointer Events 统一处理 ────────── */
 
-  let lastClientY = 0;
-  let lastDir = 0;
+  function onPointerDown(e) {
+    if (isDragReady || isDragging) return;
+    if (!e.isPrimary) return;
 
-  function onDragStart(e) {
-    dragId = this.dataset.id;
-    dragEl = this;
-    lastSwapped = null;
-    active = true;
+    dragEl = e.currentTarget;
+    dragId = dragEl.dataset.id;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
     lastClientY = e.clientY;
     lastDir = 0;
-    this.style.opacity = '0';
-    floating = createFloating(this, this.getBoundingClientRect().left, e.clientY - 30);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragId);
+    lastSwapped = null;
+    isTouch = e.pointerType === 'touch';
+
+    isDragReady = true;
+
+    if (isTouch) {
+      touchTimer = setTimeout(() => {
+        touchTimer = null;
+        try { navigator.vibrate(15); } catch (e) { /* no-op */ }
+        activateDrag();
+      }, opt.touchDelay);
+    }
   }
 
-  function onDragOver(e) {
-    e.preventDefault();
-    if (!active || !dragId) return;
-    e.dataTransfer.dropEffect = 'move';
-    if (floating) floating.style.top = clampFloatingY(e.clientY - 30) + 'px';
-    const dir = e.clientY - lastClientY;
-    if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
-    if (dir) lastDir = dir;
-    lastClientY = e.clientY;
-    autoScroll(e.clientY);
-    const target = findSwapTarget(dir);
-    if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
-  }
+  function onPointerMove(e) {
+    if (!isDragReady && !isDragging) return;
+    if (e.pointerId !== pointerId) return;
 
-  function onDrop() {
-    if (!active) return;
-    const newOrder = getItems().map(el => el.dataset.id);
-    resetDragState();
-    if (opt.onSortEnd) opt.onSortEnd(newOrder);
-  }
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
 
-  /* ── 移动端 Touch ───────────────────── */
-
-  function onTouchStart(e) {
-    const el = this;
-    const id = this.dataset.id;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    touchTimer = setTimeout(() => {
-      touchTimer = null;
-      try { navigator.vibrate(15); } catch (e) { /* no-op */ }
-      el.addEventListener('contextmenu', preventContextMenu);
-      el.style.touchAction = 'none';
-      touchDragging = true;
-      dragId = id; dragEl = el; lastSwapped = null; active = true;
-      el.style.opacity = '0';
-      floating = createFloating(el, el.getBoundingClientRect().left, touchStartY - 30);
-      lastClientY = touchStartY;
-      lastDir = 0;
-    }, opt.touchDelay);
-  }
-
-  function onTouchMove(e) {
-    if (touchDragging) {
-      e.preventDefault();
-      if (floating) floating.style.top = clampFloatingY(e.touches[0].clientY - 30) + 'px';
-      const cy = e.touches[0].clientY;
-      const dir = cy - lastClientY;
-      if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
-      if (dir) lastDir = dir;
-      lastClientY = cy;
-      autoScroll(cy);
-      const target = findSwapTarget(dir);
-      if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
+    if (isDragReady && !isTouch) {
+      if (dx * dx + dy * dy > 9) activateDrag();
       return;
     }
-    if (touchTimer) {
-      const dx = e.touches[0].clientX - touchStartX;
-      const dy = e.touches[0].clientY - touchStartY;
-      if (dx * dx + dy * dy > 100) { clearTimeout(touchTimer); touchTimer = null; }
+
+    if (isDragReady && isTouch) {
+      if (dx * dx + dy * dy > 100) {
+        clearTimeout(touchTimer); touchTimer = null;
+        resetDragState();
+      }
+      return;
+    }
+
+    if (isDragging) {
+      e.preventDefault();
+      if (floating) floating.style.top = clampFloatingY(e.clientY - 30) + 'px';
+      const dir = e.clientY - lastClientY;
+      if ((dir > 0 && lastDir < 0) || (dir < 0 && lastDir > 0)) lastSwapped = null;
+      if (dir) lastDir = dir;
+      lastClientY = e.clientY;
+      autoScroll(e.clientY);
+      const target = findSwapTarget(dir);
+      if (target && target.dataset.id !== lastSwapped) swapWithTarget(target);
     }
   }
 
-  function onTouchEnd() {
-    if (touchTimer) { resetDragState(); return; }
-    if (touchDragging) {
+  function onPointerUp(e) {
+    if (e.pointerId !== pointerId) return;
+    if (isDragReady) { resetDragState(); return; }
+    if (isDragging) {
       const newOrder = getItems().map(el => el.dataset.id);
       resetDragState();
       if (opt.onSortEnd) opt.onSortEnd(newOrder);
     }
   }
 
-  /* ── 绑定 ───────────────────────────── */
+  function onPointerCancel(e) {
+    if (e.pointerId !== pointerId) return;
+    resetDragState();
+  }
 
-  listEl.addEventListener('dragover', onDragOver);
-  listEl.addEventListener('drop', onDrop);
-  document.addEventListener('dragend', onDrop);
-  listEl._sortableData = { onDragStart, onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: onTouchEnd };
+  /* ── 数据导出 ───────────────────────── */
+
+  listEl._sortableData = { onPointerDown, onPointerMove, onPointerUp, onPointerCancel };
 
   return () => { resetDragState(); };
 }
 
 function bindSortableItem(li, data) {
   if (!data || !li) return;
-  li.draggable = true;
-  li.addEventListener('dragstart', data.onDragStart);
-  li.addEventListener('touchstart', data.onTouchStart, { passive: false });
-  li.addEventListener('touchmove', data.onTouchMove, { passive: false });
-  li.addEventListener('touchend', data.onTouchEnd);
-  li.addEventListener('touchcancel', data.onTouchCancel);
+  li.addEventListener('pointerdown', data.onPointerDown);
+  li.addEventListener('pointermove', data.onPointerMove);
+  li.addEventListener('pointerup', data.onPointerUp);
+  li.addEventListener('pointercancel', data.onPointerCancel);
 }

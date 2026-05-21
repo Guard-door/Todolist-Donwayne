@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.8.0
+
+### 待办
+- Pointer Events 重写拖拽排序：统一鼠标/触摸，pointercancel 强制触发根除死元素
+- 移除全部 DnD API + Touch Events，单套 Pointer Events 处理
+- 桌面端 pointermove >3px 即刻激活拖拽（不需长按）
+- 保留 vibrate、autoScroll、FLIP、clamp、pan-y
+
 ## v1.7.5
 
 ### 待办
