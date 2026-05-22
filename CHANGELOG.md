@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.8.3
+
+### 待办
+- 修复手机端拖拽失效（再次）：touchAction='none' 延迟到定时器确认拖拽后设置
+- setPointerCapture 也移至 activateDrag，避免 pointermove 事件丢失
+- 拖拽结束后恢复 touchAction='pan-y'（而非清空），保持正常滚动
+
 ## v1.8.2
 
 ### 待办

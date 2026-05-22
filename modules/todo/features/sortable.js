@@ -127,7 +127,8 @@ function enableSortable(listEl, options) {
   function activateDrag() {
     isDragReady = false;
     isDragging = true;
-    if (!isTouch) {
+    if (isTouch) {
+      dragEl.style.touchAction = 'none';
       try { dragEl.setPointerCapture(pointerId); } catch (e) {}
     }
     dragEl.style.opacity = '0';
@@ -141,7 +142,7 @@ function enableSortable(listEl, options) {
     if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
     if (dragEl) {
       dragEl.style.opacity = '';
-      dragEl.style.touchAction = '';
+      dragEl.style.touchAction = 'pan-y';
       try { dragEl.releasePointerCapture(pointerId); } catch (e) {}
     }
     isDragReady = false;
@@ -183,10 +184,6 @@ function enableSortable(listEl, options) {
     lastDir = 0;
     lastSwapped = null;
     isTouch = e.pointerType === 'touch';
-
-    if (isTouch) {
-      dragEl.style.touchAction = 'none';
-    }
 
     isDragReady = true;
 
