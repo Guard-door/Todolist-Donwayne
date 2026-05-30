@@ -1,4 +1,4 @@
-const APP_VERSION = '1.8.3';
+const APP_VERSION = '1.9.0';
 const CACHE_NAME = 'todo-app-v' + APP_VERSION;
 const ASSETS = [
   '.',
@@ -7,6 +7,8 @@ const ASSETS = [
   'js/shell.js',
   'modules/todo/style.css',
   'modules/todo/app.js',
+  'modules/todo/features/vendor/sortable.min.js',
+  'modules/todo/features/sortable.js',
   'icon.svg',
   'manifest.json',
 ];

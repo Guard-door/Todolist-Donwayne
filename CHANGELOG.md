@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.9.0
+
+### 待办
+- 引入 SortableJS 替换自研 Pointer Events 拖拽，根治移动端 pointercancel 问题
+- 双列表架构：活跃区 + 分隔线 + 已完成区，SortableJS 天然隔离不跨区
+- 勾选任务 FLIP 动画：元素从原位置滑动到目标区域（Apple 风格回弹缓动）
+
 ## v1.8.3
 
 ### 待办

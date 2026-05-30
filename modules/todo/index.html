@@ -48,8 +48,11 @@
   </div>
 </div>
 
-<!-- 任务列表区域 -->
-<ul id="todoList" class="todo-list" aria-label="待办事项列表"></ul>
+<!-- 任务列表区域 — 活跃 -->
+<ul id="activeList" class="todo-list" aria-label="活跃任务"></ul>
+<div id="todoSeparator" class="todo-separator" aria-hidden="true" hidden></div>
+<!-- 任务列表区域 — 已完成 -->
+<ul id="completedList" class="todo-list" aria-label="已完成任务"></ul>
 
 <div id="emptyState" class="empty-state">
   <p id="welcomeMsg">Add To Work ✨</p>
