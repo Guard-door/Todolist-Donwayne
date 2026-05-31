@@ -23,13 +23,13 @@ Stop. Read this section before doing anything.
 
 ### 第三步：PLAN.md
 写大方向功能 + 实现步骤 + 影响文件。**不写代码片段、函数名、CSS 选择器等技术细节**。
-PLAN.md 随代码一起提交，但不触发版本号变更。写完停止，等用户说"实施"。
+PLAN.md 不单独触发版本号变更。写完停止，等用户说"实施"。
 
 ### 第四步：实施
 按 PLAN 执行。
 
 ### 第五步：提交
-自动判断版本类型 → commit → 同步版本号到 `service-worker.js` 和 `CHANGELOG.md`。
+自动判断版本类型 → 所有变更文件一律提交 → 同步版本号到 `service-worker.js` 和 `CHANGELOG.md`。
 
 ### 违规
 - 跳过 Brainstorming → 撤回 commit 重走
