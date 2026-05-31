@@ -121,15 +121,18 @@ function buildItemEl(todo) {
   const text = document.createElement('span');
   text.className = 'todo-text';
   text.textContent = todo.content;
-  text.addEventListener('click', () => startEditInline(todo.id, text));
+
+  const editTrigger = document.createElement('span');
+  editTrigger.className = 'edit-trigger';
+  editTrigger.addEventListener('click', () => openModalForEdit(todo.id));
 
   if (todo.deadline) {
     const dl = document.createElement('span');
     dl.className = 'todo-deadline' + (isOverdue(todo.deadline) ? ' overdue' : '');
     dl.textContent = formatDeadline(todo.deadline);
-    body.append(text, dl);
+    body.append(editTrigger, text, dl);
   } else {
-    body.append(text);
+    body.append(editTrigger, text);
   }
 
   const del = document.createElement('button');
@@ -245,34 +248,6 @@ function update(id, content, deadline) {
   todos[i].deadline = deadline || null;
   save();
   render();
-}
-
-/* ── 原地编辑（双击） ──────────────────────────────────── */
-
-function startEditInline(id, span) {
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'todo-edit-input';
-  input.value = span.textContent;
-
-  function commit() {
-    const v = input.value.trim();
-    if (v && v !== span.textContent) {
-      const i = findIndex(id);
-      if (i !== -1) { todos[i].content = v; save(); }
-    }
-    render();
-  }
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); commit(); }
-    if (e.key === 'Escape') { e.preventDefault(); render(); }
-  });
-  input.addEventListener('blur', () => render());
-
-  span.replaceWith(input);
-  input.focus();
-  input.select();
 }
 
 /* ── 日历面板 ────────────────────────────────────────── */

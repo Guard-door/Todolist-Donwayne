@@ -21,7 +21,7 @@ function enableSortable(listEl, options) {
     delayOnTouchOnly: true,
     direction: 'vertical',
     draggable: '.todo-item',
-    filter: 'input, button, .todo-delete',
+    filter: 'input, button, .todo-delete, .edit-trigger',
     preventOnFilter: false,
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
@@ -36,26 +36,75 @@ function enableSortable(listEl, options) {
       const fb = document.querySelector('.sortable-fallback');
       if (fb) fb.style.display = 'none';
 
-      // 自己创建镜像，left 固定，只跟手指垂直移动
+      // 自己创建镜像：left 固定，只跟手指垂直移动
+      // 用 ghost 占位元素取位置（evt.item 可能已被 SortableJS display:none）
       const item = evt.item;
-      const rect = item.getBoundingClientRect();
-      customMirror = item.cloneNode(true);
-      customMirror.classList.add('drag-custom-mirror');
+      const ghost = listEl.querySelector('.sortable-ghost');
+      const refEl = ghost || item;
+      const rect = refEl.getBoundingClientRect();
+      const isCompleted = item.classList.contains('completed');
+
+      // 手动构建干净镜像：不克隆、不 regex，完全可控
+      customMirror = document.createElement('li');
+      customMirror.className = 'todo-item drag-custom-mirror' + (isCompleted ? ' completed' : '');
+      customMirror.dataset.id = item.dataset.id;
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'todo-checkbox';
+      cb.checked = item.querySelector('.todo-checkbox')?.checked || false;
+
+      const body = document.createElement('div');
+      body.className = 'todo-body';
+
+      const text = document.createElement('span');
+      text.className = 'todo-text';
+      text.textContent = item.querySelector('.todo-text')?.textContent || '';
+
+      const deadlineEl = item.querySelector('.todo-deadline');
+      if (deadlineEl) {
+        const dl = document.createElement('span');
+        dl.className = deadlineEl.className;
+        dl.textContent = deadlineEl.textContent;
+        body.append(text, dl);
+      } else {
+        body.append(text);
+      }
+
+      const del = document.createElement('button');
+      del.className = 'todo-delete';
+      del.textContent = '×';
+
+      customMirror.append(cb, body, del);
       customMirror.style.cssText = [
-        'position:fixed',
+        `position:fixed`,
         `left:${rect.left}px`,
         `top:${rect.top}px`,
         `width:${item.offsetWidth}px`,
-        'z-index:9999',
-        'pointer-events:none',
-        'box-shadow:0 12px 40px rgba(0,0,0,0.22)',
-        'opacity:1!important',
-        'visibility:visible!important',
+        `z-index:9999`,
+        `pointer-events:none`,
+        `box-shadow:0 12px 40px rgba(0,0,0,0.22)`,
+        `background-color:#fff`,
       ].join(';');
       document.body.appendChild(customMirror);
 
       moveHandler = (e) => {
-        if (customMirror) customMirror.style.top = (e.clientY - 30) + 'px';
+        if (!customMirror) return;
+        let top = e.clientY - 30;
+
+        // 垂直钳位 — 不跨分隔线
+        const sep = document.getElementById('todoSeparator');
+        if (sep && !sep.hidden) {
+          const sr = sep.getBoundingClientRect();
+          const h = customMirror.offsetHeight;
+          if (isCompleted) {
+            if (top < sr.bottom) top = sr.bottom;
+          } else {
+            if (top + h > sr.top) top = sr.top - h;
+          }
+        }
+
+        customMirror.style.top = top + 'px';
       };
       document.addEventListener('pointermove', moveHandler, { passive: true });
     },

@@ -311,7 +311,7 @@
   cursor: pointer;
 }
 
-.todo-body { flex: 1; min-width: 0; }
+.todo-body { flex: 1; min-width: 0; position: relative; }
 
 .todo-text {
   display: block;
@@ -351,6 +351,18 @@
   outline: none;
 }
 
+/* ── 编辑触发区 ────────────────────────────────────────── */
+
+.edit-trigger {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 80px;
+  height: 100%;
+  z-index: 1;
+  cursor: text;
+}
+
 /* ── 删除按钮 ────────────────────────────────────────────── */
 
 .todo-delete {
@@ -386,8 +398,7 @@
   box-shadow: 0 12px 40px rgba(0,0,0,0.22) !important;
 }
 .drag-custom-mirror {
-  visibility: visible !important;
-  opacity: 1 !important;
+  isolation: isolate;
 }
 
 /* ── 空状态 ──────────────────────────────────────────────── */

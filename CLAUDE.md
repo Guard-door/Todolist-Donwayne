@@ -26,7 +26,7 @@ Stop. Read this section before doing anything.
 PLAN.md 不 commit，不变更版本号。写完停止，等用户说"实施"。
 
 ### 第四步：实施
-按 PLAN 执行，每文件汇报进度。
+按 PLAN 执行。
 
 ### 第五步：提交
 自动判断版本类型 → commit → 同步版本号到 `service-worker.js` 和 `CHANGELOG.md`。
