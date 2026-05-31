@@ -23,7 +23,7 @@ Stop. Read this section before doing anything.
 
 ### 第三步：PLAN.md
 写大方向功能 + 实现步骤 + 影响文件。**不写代码片段、函数名、CSS 选择器等技术细节**。
-PLAN.md 不 commit，不变更版本号。写完停止，等用户说"实施"。
+PLAN.md 随代码一起提交，但不触发版本号变更。写完停止，等用户说"实施"。
 
 ### 第四步：实施
 按 PLAN 执行。
