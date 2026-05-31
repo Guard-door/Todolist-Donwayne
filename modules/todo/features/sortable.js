@@ -34,7 +34,7 @@ function enableSortable(listEl, options) {
 
       // 隐藏 SortableJS 镜像
       const fb = document.querySelector('.sortable-fallback');
-      if (fb) fb.style.display = 'none';
+      if (fb) fb.style.visibility = 'hidden';
 
       // 自己创建镜像：left 固定，只跟手指垂直移动
       // 用 ghost 占位元素取位置（evt.item 可能已被 SortableJS display:none）
@@ -81,10 +81,9 @@ function enableSortable(listEl, options) {
         `left:${rect.left}px`,
         `top:${rect.top}px`,
         `width:${item.offsetWidth}px`,
-        `z-index:9999`,
+        `z-index:150`,
         `pointer-events:none`,
         `box-shadow:0 12px 40px rgba(0,0,0,0.22)`,
-        `background-color:#fff`,
       ].join(';');
       document.body.appendChild(customMirror);
 
@@ -92,11 +91,17 @@ function enableSortable(listEl, options) {
         if (!customMirror) return;
         let top = e.clientY - 30;
 
-        // 垂直钳位 — 不跨分隔线
+        // 不超出导航栏
+        if (top < 60) top = 60;
+        if (top + customMirror.offsetHeight > window.innerHeight - 60) {
+          top = window.innerHeight - 60 - customMirror.offsetHeight;
+        }
+
+        // 不跨分隔线
         const sep = document.getElementById('todoSeparator');
         if (sep && !sep.hidden) {
-          const sr = sep.getBoundingClientRect();
           const h = customMirror.offsetHeight;
+          const sr = sep.getBoundingClientRect();
           if (isCompleted) {
             if (top < sr.bottom) top = sr.bottom;
           } else {
